@@ -17,27 +17,32 @@ namespace tidy {
 namespace bsl {
 
 void CopyMoveAccessSpecifierCheck::registerMatchers(MatchFinder *Finder) {
-  // isDeleted, isProtected
-  //  isCopyConstructor,  isMoveConstructor
-  // isCopyAssignmentOperator or isMoveAssignmentOperator
-  Finder->addMatcher(cxxMethodDecl(anyOf(isCopyConstructor(), isMoveConstructor(), isCopyAssignmentOperator(), isMoveAssignmentOperator()),
-                                  unless(anyOf(isDeleted(), isProtected()))).bind("x"), this);
+  Finder->addMatcher(cxxMethodDecl(anyOf(isCopyAssignmentOperator(), isMoveAssignmentOperator()),
+                                  unless(anyOf(isDeleted(), isProtected()))).bind("op"), this);
+  Finder->addMatcher(cxxConstructorDecl(anyOf(isCopyConstructor(), isMoveConstructor()),
+                                  unless(anyOf(isDeleted(), isProtected()))).bind("ctor"), this);
 }
-
-void CopyMoveAccessSpecifierCheck::copyMoveProtectedOrDelete() {
-
-}
-
 
 void CopyMoveAccessSpecifierCheck::check(const MatchFinder::MatchResult &Result) {
-  // FIXME: Add callback implementation.
-  const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
-  forallBases(
-      [BaseClass](const CXXRecordDecl *Cur) { return Cur != BaseClass; });
+  auto Mgr = Result.SourceManager;
 
+  const auto *VDecl = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
+  if (VDecl) {
+    auto LocV = VDecl->getLocation();
+    if (Mgr->getFileID(LocV) != Mgr->getMainFileID())
+      return;
+    if (!VDecl->getParent()->isEffectivelyFinal())
+      diag(LocV, "Copy and move constructors shall be declared protected or defined “=delete” in base class; otherwise declare non-base class as final");
+  }
 
-  diag(MatchedDecl->getLocation(), "function %0 is insufficiently awesome")
-      << MatchedDecl;
+  const auto *MDecl = Result.Nodes.getNodeAs<CXXMethodDecl>("op");
+  if (MDecl) {
+    auto LocM = MDecl->getLocation();
+    if (Mgr->getFileID(LocM) != Mgr->getMainFileID())
+      return;
+    if (!MDecl->getParent()->isEffectivelyFinal())
+      diag(LocM, "Copy and move assignment operators shall be declared protected or defined “=delete” in base class; otherwise declare non-base class as final");
+  }
 }
 
 } // namespace bsl
