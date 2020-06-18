@@ -50,6 +50,7 @@ Clang-Tidy Checks
    `bsl-class-member-init <bsl-class-member-init.html>`_,
    `bsl-class-member-redefined <bsl-class-member-redefined.html>`_,
    `bsl-class-virtual-base <bsl-class-virtual-base.html>`_,
+   `bsl-copy-move-access-specifier <bsl-copy-move-access-specifier.html>`_, "Yes"
    `bsl-decl-forbidden <bsl-decl-forbidden.html>`_,
    `bsl-enum-explicit <bsl-enum-explicit.html>`_,
    `bsl-enum-init <bsl-enum-init.html>`_,

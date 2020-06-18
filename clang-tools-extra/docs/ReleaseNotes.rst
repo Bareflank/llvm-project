@@ -106,6 +106,11 @@ New checks
 
   Warns if a class has any virtual bases.
 
+- New :doc:`bsl-copy-move-access-specifier
+  <clang-tidy/checks/bsl-copy-move-access-specifier>` check.
+
+  FIXME: add release notes.
+
 - New :doc:`bsl-decl-forbidden
   <clang-tidy/checks/bsl-decl-forbidden>` check.
 
