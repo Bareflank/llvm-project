@@ -17,13 +17,20 @@ namespace tidy {
 namespace bsl {
 
 void CopyMoveAccessSpecifierCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(cxxMethodDecl(anyOf(isCopyAssignmentOperator(), isMoveAssignmentOperator()),
-                                  unless(anyOf(isDeleted(), isProtected()))).bind("op"), this);
-  Finder->addMatcher(cxxConstructorDecl(anyOf(isCopyConstructor(), isMoveConstructor()),
-                                  unless(anyOf(isDeleted(), isProtected()))).bind("ctor"), this);
+  Finder->addMatcher(
+      cxxConstructorDecl(anyOf(isCopyConstructor(), isMoveConstructor()),
+                         unless(anyOf(isDeleted(), isProtected())))
+          .bind("ctor"),
+      this);
+  Finder->addMatcher(cxxMethodDecl(anyOf(isCopyAssignmentOperator(),
+                                         isMoveAssignmentOperator()),
+                                   unless(anyOf(isDeleted(), isProtected())))
+                         .bind("op"),
+                     this);
 }
 
-void CopyMoveAccessSpecifierCheck::check(const MatchFinder::MatchResult &Result) {
+void CopyMoveAccessSpecifierCheck::check(
+    const MatchFinder::MatchResult &Result) {
   auto Mgr = Result.SourceManager;
 
   const auto *VDecl = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
@@ -32,7 +39,10 @@ void CopyMoveAccessSpecifierCheck::check(const MatchFinder::MatchResult &Result)
     if (Mgr->getFileID(LocV) != Mgr->getMainFileID())
       return;
     if (!VDecl->getParent()->isEffectivelyFinal())
-      diag(LocV, "Copy and move constructors shall be declared protected or defined “=delete” in base class; otherwise declare non-base class as final");
+      diag(
+          LocV,
+          "Copy and move constructors shall be declared protected or defined "
+          "“=delete” in base class; otherwise declare non-base class as final");
   }
 
   const auto *MDecl = Result.Nodes.getNodeAs<CXXMethodDecl>("op");
@@ -41,7 +51,9 @@ void CopyMoveAccessSpecifierCheck::check(const MatchFinder::MatchResult &Result)
     if (Mgr->getFileID(LocM) != Mgr->getMainFileID())
       return;
     if (!MDecl->getParent()->isEffectivelyFinal())
-      diag(LocM, "Copy and move assignment operators shall be declared protected or defined “=delete” in base class; otherwise declare non-base class as final");
+      diag(LocM, "Copy and move assignment operators shall be declared "
+                 "protected or defined “=delete” in base class; otherwise "
+                 "declare non-base class as final");
   }
 }
 

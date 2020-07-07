@@ -109,7 +109,8 @@ New checks
 - New :doc:`bsl-copy-move-access-specifier
   <clang-tidy/checks/bsl-copy-move-access-specifier>` check.
 
-  FIXME: add release notes.
+  Checks that copy and move constructors and copy assignment and move 
+  assignment operators are declared protected or deleted in base class.
 
 - New :doc:`bsl-decl-forbidden
   <clang-tidy/checks/bsl-decl-forbidden>` check.

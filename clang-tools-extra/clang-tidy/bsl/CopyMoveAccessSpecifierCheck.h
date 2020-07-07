@@ -15,7 +15,8 @@ namespace clang {
 namespace tidy {
 namespace bsl {
 
-/// FIXME: Write a short description.
+/// Checks that copy and move constructors and copy assignment and move
+/// assignment operators are declared protected or deleted in base class
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/bsl-copy-move-access-specifier.html
