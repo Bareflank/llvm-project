@@ -38,6 +38,7 @@ void UserDefinedTypeNamesMatchHeaderNameCheck::check(const MatchFinder::MatchRes
   if (isa<NamespaceDecl>(D) ||
       isa<FunctionDecl>(D) ||
       isa<FunctionTemplateDecl>(D) ||
+      isa<TypeAliasDecl>(D) ||
       isa<VarDecl>(D) ||
       isa<VarTemplateDecl>(D) ||
       isa<FieldDecl>(D) ||
@@ -95,11 +96,6 @@ void UserDefinedTypeNamesMatchHeaderNameCheck::check(const MatchFinder::MatchRes
 
   if (name == filename)
     return;
-
-  if (isa<TypeAliasDecl>(D)) {
-    if (name == filename + "_t")
-      return;
-  }
 
   diag(D->getBeginLoc(), "User-defined types must have the same name as the header file they are "
                          "defined in. Either name the %0 '%1', or name the header '%2'")

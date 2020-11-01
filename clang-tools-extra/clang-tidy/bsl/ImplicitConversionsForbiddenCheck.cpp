@@ -42,7 +42,8 @@ void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Re
       ICE->getCastKind() == CK_MemberPointerToBoolean ||
       ICE->getCastKind() == CK_PointerToBoolean ||
       ICE->getCastKind() == CK_ToVoid ||
-      ICE->getCastKind() == CK_BuiltinFnToFnPtr)
+      ICE->getCastKind() == CK_BuiltinFnToFnPtr ||
+      ICE->getCastKind() == CK_ConstructorConversion)
     return;
 
   // Decaying a C-Style string is ok so long as it is a literal.
