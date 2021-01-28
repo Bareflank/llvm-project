@@ -36,12 +36,6 @@ void DeclForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  const auto BitField = dyn_cast<FieldDecl>(D);
-  if (BitField) {
-    diag(Loc, "bitfields are forbidden");
-    return;
-  }
-
   const auto Friend = dyn_cast<FriendDecl>(D);
   if (Friend) {
     const auto FriendLoc = Friend->getFriendLoc();

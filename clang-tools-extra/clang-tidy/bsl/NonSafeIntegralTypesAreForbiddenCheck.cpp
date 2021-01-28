@@ -32,6 +32,16 @@ void NonSafeIntegralTypesAreForbiddenCheck::check(const MatchFinder::MatchResult
     if (name == "char")
       return;
 
+    if (auto const *parent = VD->getParentFunctionOrMethod()) {
+      if (auto const *FD = dyn_cast<FunctionDecl>(parent)) {
+        if (FD->isExternC())
+          return;
+
+        if (FD->getNameAsString() == "main")
+          return;
+      }
+    }
+
     FullSourceLoc FullLocation = Result.Context->getFullLoc(VD->getBeginLoc());
     if (auto const File = FullLocation.getFileEntry()) {
       auto const filename{File->tryGetRealPathName()};

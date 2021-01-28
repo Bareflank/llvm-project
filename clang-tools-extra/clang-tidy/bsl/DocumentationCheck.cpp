@@ -6,13 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "IsDefinedInATestFile.h"
+
 #include "DocumentationCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/AST/Comment.h"
 #include "clang/AST/CommentCommandTraits.h"
-
-#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -76,32 +76,6 @@ bool hasAReturn(
         }
       }
     }
-  }
-
-  return false;
-}
-
-bool isDefinedInATestFile(
-  ASTContext const * const Context, Decl const * const D)
-{
-  FullSourceLoc FullLocation = Context->getFullLoc(D->getBeginLoc());
-
-  auto const File = FullLocation.getFileEntry();
-  if (!File)
-    return false;
-
-  std::string filename{File->tryGetRealPathName()};
-
-  const size_t test_folder1 = filename.find("test/");
-  const size_t test_folder2 = filename.find("test\\");
-  const size_t test_folder3 = filename.find("tests/");
-  const size_t test_folder4 = filename.find("tests\\");
-  if (std::string::npos != test_folder1 ||
-      std::string::npos != test_folder2 ||
-      std::string::npos != test_folder3 ||
-      std::string::npos != test_folder4)
-  {
-    return true;
   }
 
   return false;
@@ -195,7 +169,7 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
   auto const *Context = Result.Context;
 
   if (auto const *FD = Result.Nodes.getNodeAs<FunctionDecl>("func-decl")) {
-    if (isDefinedInATestFile(Context, FD))
+    if (isDefinedInATestFile(Context, FD->getBeginLoc()))
       return;
 
     if (FD->getMemberSpecializationInfo())
@@ -204,12 +178,14 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
     if (FD->getTemplateSpecializationInfo())
       return;
 
+    if (auto const *CXXMD = dyn_cast<CXXMethodDecl>(FD)) {
+      if (CXXMD->getParent()->isLambda())
+        return;
+    }
+
     if (!hasABrief(Context, FD)) {
       diag(FD->getLocation(), "Function %0 is missing documentation. Are you missing the '@brief' command?") << FD;
     }
-
-    if (FD->isDeleted())
-      return;
 
     if (isa<CXXDeductionGuideDecl>(FD))
       return;
@@ -251,10 +227,13 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (auto const *CXXRD = Result.Nodes.getNodeAs<CXXRecordDecl>("class-decl")) {
-    if (isDefinedInATestFile(Context, CXXRD))
+    if (isDefinedInATestFile(Context, CXXRD->getBeginLoc()))
       return;
 
     if (isa<ClassTemplateSpecializationDecl>(CXXRD))
+      return;
+
+    if (CXXRD->isLambda())
       return;
 
     if (CXXRD->getDefinition() != CXXRD)
@@ -292,7 +271,7 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (auto const *VD = Result.Nodes.getNodeAs<VarDecl>("var-decl")) {
-    if (isDefinedInATestFile(Context, VD))
+    if (isDefinedInATestFile(Context, VD->getBeginLoc()))
       return;
 
     if (VD->getParentFunctionOrMethod())
@@ -309,7 +288,7 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (auto const *FD = Result.Nodes.getNodeAs<FieldDecl>("field-decl")) {
-    if (isDefinedInATestFile(Context, FD))
+    if (isDefinedInATestFile(Context, FD->getBeginLoc()))
       return;
 
     if (!hasABrief(Context, FD)) {
@@ -320,7 +299,7 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (auto const *TAD = Result.Nodes.getNodeAs<TypeAliasDecl>("alias-decl")) {
-    if (isDefinedInATestFile(Context, TAD))
+    if (isDefinedInATestFile(Context, TAD->getBeginLoc()))
       return;
 
     if (TAD->getParentFunctionOrMethod())
@@ -349,7 +328,7 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (auto const *ED = Result.Nodes.getNodeAs<EnumDecl>("enum-decl")) {
-    if (isDefinedInATestFile(Context, ED))
+    if (isDefinedInATestFile(Context, ED->getBeginLoc()))
       return;
 
     if (!hasABrief(Context, ED)) {

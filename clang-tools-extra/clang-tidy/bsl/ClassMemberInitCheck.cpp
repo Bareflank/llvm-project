@@ -37,18 +37,23 @@ void ClassMemberInitCheck::checkCtorWithInit(const CXXConstructorDecl *Ctor)
   const auto Parent = Ctor->getParent()->getCanonicalDecl();
   auto NumFields = 0;
 
+  if (nullptr == Parent)
+    return;
+
   for (const auto Field : Parent->fields()) {
     ++NumFields;
 
     if (!Field->hasInClassInitializer())
       continue;
 
-    const auto Init = Field->getInClassInitializer();
-
     diag(Loc, "must use either in-class initializers for all fields"
         " or constructor initializers for all fields");
-    diag(Init->getBeginLoc(), "found in-class initializer here",
-        DiagnosticIDs::Note);
+
+    const auto Init = Field->getInClassInitializer();
+    if (nullptr != Init) {
+      diag(Init->getBeginLoc(), "found in-class initializer here",
+          DiagnosticIDs::Note);
+    }
 
     return;
   }
