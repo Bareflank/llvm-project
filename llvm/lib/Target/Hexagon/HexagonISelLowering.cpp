@@ -109,6 +109,11 @@ static cl::opt<bool> AlignLoads("hexagon-align-loads",
   cl::Hidden, cl::init(false),
   cl::desc("Rewrite unaligned loads as a pair of aligned loads"));
 
+static cl::opt<bool>
+    DisableArgsMinAlignment("hexagon-disable-args-min-alignment", cl::Hidden,
+                            cl::init(false),
+                            cl::desc("Disable minimum alignment of 1 for "
+                                     "arguments passed by value on stack"));
 
 namespace {
 
@@ -387,9 +392,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   MachineFrameInfo &MFI = MF.getFrameInfo();
   auto PtrVT = getPointerTy(MF.getDataLayout());
 
-  unsigned NumParams = CLI.CS.getInstruction()
-                        ? CLI.CS.getFunctionType()->getNumParams()
-                        : 0;
+  unsigned NumParams = CLI.CB ? CLI.CB->getFunctionType()->getNumParams() : 0;
   if (GlobalAddressSDNode *GAN = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(GAN->getGlobal(), dl, MVT::i32);
 
@@ -403,6 +406,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   if (Subtarget.useHVXOps())
     CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon_HVX);
+  else if (DisableArgsMinAlignment)
+    CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon_Legacy);
   else
     CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon);
 
@@ -432,7 +437,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       DAG.getCopyFromReg(Chain, dl, HRI.getStackRegister(), PtrVT);
 
   bool NeedsArgAlign = false;
-  unsigned LargestAlignSeen = 0;
+  Align LargestAlignSeen;
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
@@ -469,8 +474,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         StackPtr.getValueType());
       MemAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, MemAddr);
       if (ArgAlign)
-        LargestAlignSeen = std::max(LargestAlignSeen,
-                             (unsigned)VA.getLocVT().getStoreSizeInBits() >> 3);
+        LargestAlignSeen = std::max(
+            LargestAlignSeen, Align(VA.getLocVT().getStoreSizeInBits() / 8));
       if (Flags.isByVal()) {
         // The argument is a struct passed by value. According to LLVM, "Arg"
         // is a pointer.
@@ -493,7 +498,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   if (NeedsArgAlign && Subtarget.hasV60Ops()) {
     LLVM_DEBUG(dbgs() << "Function needs byte stack align due to call args\n");
-    unsigned VecAlign = HRI.getSpillAlignment(Hexagon::HvxVRRegClass);
+    Align VecAlign(HRI.getSpillAlignment(Hexagon::HvxVRRegClass));
     LargestAlignSeen = std::max(LargestAlignSeen, VecAlign);
     MFI.ensureMaxAlignment(LargestAlignSeen);
   }
@@ -729,7 +734,7 @@ HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   auto &HFI = *Subtarget.getFrameLowering();
   // "Zero" means natural stack alignment.
   if (A == 0)
-    A = HFI.getStackAlignment();
+    A = HFI.getStackAlign().value();
 
   LLVM_DEBUG({
     dbgs () << __func__ << " Align: " << A << " Size: ";
@@ -764,6 +769,8 @@ SDValue HexagonTargetLowering::LowerFormalArguments(
 
   if (Subtarget.useHVXOps())
     CCInfo.AnalyzeFormalArguments(Ins, CC_Hexagon_HVX);
+  else if (DisableArgsMinAlignment)
+    CCInfo.AnalyzeFormalArguments(Ins, CC_Hexagon_Legacy);
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Hexagon);
 
@@ -1087,7 +1094,7 @@ HexagonTargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
   Constant *CVal = nullptr;
   bool isVTi1Type = false;
   if (auto *CV = dyn_cast<ConstantVector>(CPN->getConstVal())) {
-    if (CV->getType()->getVectorElementType()->isIntegerTy(1)) {
+    if (cast<VectorType>(CV->getType())->getElementType()->isIntegerTy(1)) {
       IRBuilder<> IRB(CV->getContext());
       SmallVector<Constant*, 128> NewConst;
       unsigned VecLen = CV->getNumOperands();
@@ -1100,19 +1107,20 @@ HexagonTargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
       isVTi1Type = true;
     }
   }
-  unsigned Align = CPN->getAlignment();
+  Align Alignment = CPN->getAlign();
   bool IsPositionIndependent = isPositionIndependent();
   unsigned char TF = IsPositionIndependent ? HexagonII::MO_PCREL : 0;
 
   unsigned Offset = 0;
   SDValue T;
   if (CPN->isMachineConstantPoolEntry())
-    T = DAG.getTargetConstantPool(CPN->getMachineCPVal(), ValTy, Align, Offset,
-                                  TF);
+    T = DAG.getTargetConstantPool(CPN->getMachineCPVal(), ValTy, Alignment,
+                                  Offset, TF);
   else if (isVTi1Type)
-    T = DAG.getTargetConstantPool(CVal, ValTy, Align, Offset, TF);
+    T = DAG.getTargetConstantPool(CVal, ValTy, Alignment, Offset, TF);
   else
-    T = DAG.getTargetConstantPool(CPN->getConstVal(), ValTy, Align, Offset, TF);
+    T = DAG.getTargetConstantPool(CPN->getConstVal(), ValTy, Alignment, Offset,
+                                  TF);
 
   assert(cast<ConstantPoolSDNode>(T)->getTargetFlags() == TF &&
          "Inconsistent target flag encountered");
@@ -1982,8 +1990,7 @@ bool HexagonTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     // The offset value comes through Modifier register. For now, assume the
     // offset is 0.
     Info.offset = 0;
-    Info.align =
-        MaybeAlign(DL.getABITypeAlignment(Info.memVT.getTypeForEVT(Cont)));
+    Info.align = DL.getABITypeAlign(Info.memVT.getTypeForEVT(Cont));
     Info.flags = MachineMemOperand::MOLoad;
     return true;
   }
@@ -2909,10 +2916,10 @@ HexagonTargetLowering::LowerUnalignedLoad(SDValue Op, SelectionDAG &DAG)
   MachineMemOperand *WideMMO = nullptr;
   if (MachineMemOperand *MMO = LN->getMemOperand()) {
     MachineFunction &MF = DAG.getMachineFunction();
-    WideMMO = MF.getMachineMemOperand(MMO->getPointerInfo(), MMO->getFlags(),
-                    2*LoadLen, LoadLen, MMO->getAAInfo(), MMO->getRanges(),
-                    MMO->getSyncScopeID(), MMO->getOrdering(),
-                    MMO->getFailureOrdering());
+    WideMMO = MF.getMachineMemOperand(
+        MMO->getPointerInfo(), MMO->getFlags(), 2 * LoadLen, Align(LoadLen),
+        MMO->getAAInfo(), MMO->getRanges(), MMO->getSyncScopeID(),
+        MMO->getOrdering(), MMO->getFailureOrdering());
   }
 
   SDValue Load0 = DAG.getLoad(LoadTy, dl, Chain, Base0, WideMMO);
@@ -3270,12 +3277,12 @@ bool HexagonTargetLowering::isLegalAddressingMode(const DataLayout &DL,
     // The type Ty passed here would then be "void". Skip the alignment
     // checks, but do not return false right away, since that confuses
     // LSR into crashing.
-    unsigned A = DL.getABITypeAlignment(Ty);
+    Align A = DL.getABITypeAlign(Ty);
     // The base offset must be a multiple of the alignment.
-    if ((AM.BaseOffs % A) != 0)
+    if (!isAligned(A, AM.BaseOffs))
       return false;
     // The shifted offset must fit in 11 bits.
-    if (!isInt<11>(AM.BaseOffs >> Log2_32(A)))
+    if (!isInt<11>(AM.BaseOffs >> Log2(A)))
       return false;
   }
 
@@ -3386,12 +3393,12 @@ EVT HexagonTargetLowering::getOptimalMemOpType(
   return MVT::Other;
 }
 
-bool HexagonTargetLowering::allowsMemoryAccess(LLVMContext &Context,
-      const DataLayout &DL, EVT VT, unsigned AddrSpace, unsigned Alignment,
-      MachineMemOperand::Flags Flags, bool *Fast) const {
+bool HexagonTargetLowering::allowsMemoryAccess(
+    LLVMContext &Context, const DataLayout &DL, EVT VT, unsigned AddrSpace,
+    Align Alignment, MachineMemOperand::Flags Flags, bool *Fast) const {
   MVT SVT = VT.getSimpleVT();
   if (Subtarget.isHVXVectorType(SVT, true))
-    return allowsHvxMemoryAccess(SVT, Alignment, Flags, Fast);
+    return allowsHvxMemoryAccess(SVT, Flags, Fast);
   return TargetLoweringBase::allowsMemoryAccess(
               Context, DL, VT, AddrSpace, Alignment, Flags, Fast);
 }
@@ -3401,7 +3408,7 @@ bool HexagonTargetLowering::allowsMisalignedMemoryAccesses(
       MachineMemOperand::Flags Flags, bool *Fast) const {
   MVT SVT = VT.getSimpleVT();
   if (Subtarget.isHVXVectorType(SVT, true))
-    return allowsHvxMisalignedMemoryAccesses(SVT, Alignment, Flags, Fast);
+    return allowsHvxMisalignedMemoryAccesses(SVT, Flags, Fast);
   if (Fast)
     *Fast = false;
   return false;
@@ -3506,9 +3513,5 @@ bool HexagonTargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
 TargetLowering::AtomicExpansionKind
 HexagonTargetLowering::shouldExpandAtomicCmpXchgInIR(
     AtomicCmpXchgInst *AI) const {
-  const DataLayout &DL = AI->getModule()->getDataLayout();
-  unsigned Size = DL.getTypeStoreSize(AI->getCompareOperand()->getType());
-  if (Size >= 4 && Size <= 8)
-    return AtomicExpansionKind::LLSC;
-  return AtomicExpansionKind::None;
+  return AtomicExpansionKind::LLSC;
 }

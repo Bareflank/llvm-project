@@ -19,7 +19,6 @@
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/WindowsError.h"
 #include <fcntl.h>
-#include <io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -75,8 +74,7 @@ std::error_code widenPath(const Twine &Path8, SmallVectorImpl<wchar_t> &Path16,
   SmallString<MAX_PATH> Path8Str;
   Path8.toVector(Path8Str);
 
-  std::error_code EC = UTF8ToUTF16(Path8Str, Path16);
-  if (EC)
+  if (std::error_code EC = UTF8ToUTF16(Path8Str, Path16))
     return EC;
 
   const bool IsAbsolute = llvm::sys::path::is_absolute(Path8);
@@ -97,22 +95,17 @@ std::error_code widenPath(const Twine &Path8, SmallVectorImpl<wchar_t> &Path16,
     return std::error_code();
 
   if (!IsAbsolute) {
-    if (EC = llvm::sys::fs::make_absolute(Path8Str))
+    if (std::error_code EC = llvm::sys::fs::make_absolute(Path8Str))
       return EC;
   }
 
   // Remove '.' and '..' because long paths treat these as real path components.
+  llvm::sys::path::native(Path8Str, path::Style::windows);
   llvm::sys::path::remove_dots(Path8Str, true);
 
   const StringRef RootName = llvm::sys::path::root_name(Path8Str);
   assert(!RootName.empty() &&
          "Root name cannot be empty for an absolute path!");
-
-  // llvm::sys::path::remove_dots, used above, can leave a '/' after the root
-  // name and long paths must use '\' as the separator.
-  const size_t RootNameSize = RootName.size();
-  if (RootNameSize < Path8Str.size() && Path8Str[RootNameSize] == '/')
-    Path8Str[RootNameSize] = '\\';
 
   SmallString<2 * MAX_PATH> FullPath(LongPathPrefix);
   if (RootName[1] != ':') { // Check if UNC.
@@ -358,13 +351,13 @@ std::error_code is_local(const Twine &path, bool &result) {
 static std::error_code realPathFromHandle(HANDLE H,
                                           SmallVectorImpl<wchar_t> &Buffer) {
   DWORD CountChars = ::GetFinalPathNameByHandleW(
-      H, Buffer.begin(), Buffer.capacity() - 1, FILE_NAME_NORMALIZED);
-  if (CountChars > Buffer.capacity()) {
+      H, Buffer.begin(), Buffer.capacity(), FILE_NAME_NORMALIZED);
+  if (CountChars && CountChars >= Buffer.capacity()) {
     // The buffer wasn't big enough, try again.  In this case the return value
     // *does* indicate the size of the null terminator.
     Buffer.reserve(CountChars);
     CountChars = ::GetFinalPathNameByHandleW(
-        H, Buffer.data(), Buffer.capacity() - 1, FILE_NAME_NORMALIZED);
+        H, Buffer.begin(), Buffer.capacity(), FILE_NAME_NORMALIZED);
   }
   if (CountChars == 0)
     return mapWindowsError(GetLastError());
@@ -409,6 +402,20 @@ std::error_code is_local(int FD, bool &Result) {
 }
 
 static std::error_code setDeleteDisposition(HANDLE Handle, bool Delete) {
+  // First, check if the file is on a network (non-local) drive. If so, don't
+  // set DeleteFile to true, since it prevents opening the file for writes.
+  SmallVector<wchar_t, 128> FinalPath;
+  if (std::error_code EC = realPathFromHandle(Handle, FinalPath))
+    return EC;
+
+  bool IsLocal;
+  if (std::error_code EC = is_local_internal(FinalPath, IsLocal))
+    return EC;
+
+  if (!IsLocal)
+    return std::error_code();
+
+  // The file is on a local drive, set the DeleteFile to true.
   FILE_DISPOSITION_INFO Disposition;
   Disposition.DeleteFile = Delete;
   if (!SetFileInformationByHandle(Handle, FileDispositionInfo, &Disposition,
@@ -561,6 +568,11 @@ std::error_code rename(const Twine &From, const Twine &To) {
                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (FromHandle)
       break;
+
+    // We don't want to loop if the file doesn't exist.
+    auto EC = mapWindowsError(GetLastError());
+    if (EC == errc::no_such_file_or_directory)
+      return EC;
   }
   if (!FromHandle)
     return mapWindowsError(GetLastError());
@@ -958,9 +970,9 @@ std::error_code detail::directory_iterator_construct(detail::DirIterState &IT,
     return EC;
 
   // Convert path to the format that Windows is happy with.
-  if (PathUTF16.size() > 0 &&
-      !is_separator(PathUTF16[Path.size() - 1]) &&
-      PathUTF16[Path.size() - 1] != L':') {
+  size_t PathUTF16Len = PathUTF16.size();
+  if (PathUTF16Len > 0 && !is_separator(PathUTF16[PathUTF16Len - 1]) &&
+      PathUTF16[PathUTF16Len - 1] != L':') {
     PathUTF16.push_back(L'\\');
     PathUTF16.push_back(L'*');
   } else {
@@ -1371,6 +1383,16 @@ static bool getKnownFolderPath(KNOWNFOLDERID folderId,
 
 bool home_directory(SmallVectorImpl<char> &result) {
   return getKnownFolderPath(FOLDERID_Profile, result);
+}
+
+bool user_config_directory(SmallVectorImpl<char> &result) {
+  // Either local or roaming appdata may be suitable in some cases, depending
+  // on the data. Local is more conservative, Roaming may not always be correct.
+  return getKnownFolderPath(FOLDERID_LocalAppData, result);
+}
+
+bool cache_directory(SmallVectorImpl<char> &result) {
+  return getKnownFolderPath(FOLDERID_LocalAppData, result);
 }
 
 static bool getTempDirEnvVar(const wchar_t *Var, SmallVectorImpl<char> &Res) {

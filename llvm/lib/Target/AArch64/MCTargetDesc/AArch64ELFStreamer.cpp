@@ -47,6 +47,10 @@ class AArch64TargetAsmStreamer : public AArch64TargetStreamer {
 
   void emitInst(uint32_t Inst) override;
 
+  void emitDirectiveVariantPCS(MCSymbol *Symbol) override {
+    OS << "\t.variant_pcs " << Symbol->getName() << "\n";
+  }
+
 public:
   AArch64TargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
 };
@@ -81,14 +85,14 @@ public:
                       std::move(Emitter)),
         MappingSymbolCounter(0), LastEMS(EMS_None) {}
 
-  void ChangeSection(MCSection *Section, const MCExpr *Subsection) override {
+  void changeSection(MCSection *Section, const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
     // use. Each one should start off as EMS_None, which is provided as the
     // default constructor by DenseMap::lookup.
     LastMappingSymbols[getPreviousSection().first] = LastEMS;
     LastEMS = LastMappingSymbols.lookup(Section);
 
-    MCELFStreamer::ChangeSection(Section, Subsection);
+    MCELFStreamer::changeSection(Section, Subsection);
   }
 
   // Reset state between object emissions
@@ -192,6 +196,10 @@ AArch64ELFStreamer &AArch64TargetELFStreamer::getStreamer() {
 
 void AArch64TargetELFStreamer::emitInst(uint32_t Inst) {
   getStreamer().emitInst(Inst);
+}
+
+void AArch64TargetELFStreamer::emitDirectiveVariantPCS(MCSymbol *Symbol) {
+  cast<MCSymbolELF>(Symbol)->setOther(ELF::STO_AARCH64_VARIANT_PCS);
 }
 
 MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,

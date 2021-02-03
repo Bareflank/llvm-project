@@ -23,7 +23,12 @@ func @main() {
   %c4 = constant 4 : index
   %c5 = constant 5 : index
   %c6 = constant 6 : index
-    
+
+  %cast_data = memref_cast %data : memref<2x6xi32> to memref<*xi32>
+  call @mcuMemHostRegisterInt32(%cast_data) : (memref<*xi32>) -> ()
+  %cast_sum = memref_cast %sum : memref<2xi32> to memref<*xi32>
+  call @mcuMemHostRegisterInt32(%cast_sum) : (memref<*xi32>) -> ()
+
   store %cst0, %data[%c0, %c0] : memref<2x6xi32>
   store %cst1, %data[%c0, %c1] : memref<2x6xi32>
   store %cst2, %data[%c0, %c2] : memref<2x6xi32>
@@ -47,12 +52,12 @@ func @main() {
     gpu.terminator
   }
 
-  %ptr = memref_cast %sum : memref<2xi32> to memref<*xi32>
-  call @print_memref_i32(%ptr) : (memref<*xi32>) -> ()
+  call @print_memref_i32(%cast_sum) : (memref<*xi32>) -> ()
   // CHECK: [31, 15]
 
   return
 }
 
+func @mcuMemHostRegisterInt32(%ptr : memref<*xi32>)
 func @print_memref_i32(memref<*xi32>)
 

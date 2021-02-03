@@ -11,8 +11,10 @@
 
 #include "Plugins/Platform/POSIX/PlatformPOSIX.h"
 #include "lldb/Host/FileSystem.h"
+#include "lldb/Utility/ConstString.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/StructuredData.h"
+#include "lldb/Utility/XcodeSDK.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 
@@ -24,6 +26,11 @@ public:
   PlatformDarwin(bool is_host);
 
   ~PlatformDarwin() override;
+
+  lldb_private::Status PutFile(const lldb_private::FileSpec &source,
+                               const lldb_private::FileSpec &destination,
+                               uint32_t uid = UINT32_MAX,
+                               uint32_t gid = UINT32_MAX) override;
 
   // lldb_private::Platform functions
   lldb_private::Status
@@ -39,7 +46,7 @@ public:
   GetSharedModule(const lldb_private::ModuleSpec &module_spec,
                   lldb_private::Process *process, lldb::ModuleSP &module_sp,
                   const lldb_private::FileSpecList *module_search_paths_ptr,
-                  lldb::ModuleSP *old_module_sp_ptr,
+                  llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules,
                   bool *did_create_ptr) override;
 
   size_t GetSoftwareBreakpointTrapOpcode(
@@ -79,28 +86,10 @@ public:
   static std::tuple<llvm::VersionTuple, llvm::StringRef>
   ParseVersionBuildDir(llvm::StringRef str);
 
-  enum SDKType : int {
-    MacOSX = 0,
-    iPhoneSimulator,
-    iPhoneOS,
-    AppleTVSimulator,
-    AppleTVOS,
-    WatchSimulator,
-    watchOS,
-    bridgeOS,
-    Linux,
-    numSDKTypes,
-    unknown = -1
-  };
-
   llvm::Expected<lldb_private::StructuredData::DictionarySP>
   FetchExtendedCrashInformation(lldb_private::Process &process) override;
 
-  static llvm::StringRef GetSDKNameForType(SDKType type);
-  static lldb_private::FileSpec GetXcodeSDK(SDKType type);
-  static lldb_private::FileSpec GetXcodeContentsDirectory();
-
-  /// Return the toolchain directroy the current LLDB instance is located in.
+  /// Return the toolchain directory the current LLDB instance is located in.
   static lldb_private::FileSpec GetCurrentToolchainDirectory();
 
   /// Return the command line tools directory the current LLDB instance is
@@ -143,16 +132,11 @@ protected:
   virtual lldb_private::Status GetSharedModuleWithLocalCache(
       const lldb_private::ModuleSpec &module_spec, lldb::ModuleSP &module_sp,
       const lldb_private::FileSpecList *module_search_paths_ptr,
-      lldb::ModuleSP *old_module_sp_ptr, bool *did_create_ptr);
-
-  static bool SDKSupportsModules(SDKType sdk_type, llvm::VersionTuple version);
-
-  static bool SDKSupportsModules(SDKType desired_type,
-                                 const lldb_private::FileSpec &sdk_path);
+      llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules, bool *did_create_ptr);
 
   struct SDKEnumeratorInfo {
     lldb_private::FileSpec found_path;
-    SDKType sdk_type;
+    lldb_private::XcodeSDK::Type sdk_type;
   };
 
   static lldb_private::FileSystem::EnumerateDirectoryResult
@@ -160,33 +144,32 @@ protected:
                       llvm::StringRef path);
 
   static lldb_private::FileSpec
-  FindSDKInXcodeForModules(SDKType sdk_type,
+  FindSDKInXcodeForModules(lldb_private::XcodeSDK::Type sdk_type,
                            const lldb_private::FileSpec &sdks_spec);
 
   static lldb_private::FileSpec
-  GetSDKDirectoryForModules(PlatformDarwin::SDKType sdk_type);
+  GetSDKDirectoryForModules(lldb_private::XcodeSDK::Type sdk_type);
 
-  void
-  AddClangModuleCompilationOptionsForSDKType(lldb_private::Target *target,
-                                             std::vector<std::string> &options,
-                                             SDKType sdk_type);
-
-  const char *GetDeveloperDirectory();
+  void AddClangModuleCompilationOptionsForSDKType(
+      lldb_private::Target *target, std::vector<std::string> &options,
+      lldb_private::XcodeSDK::Type sdk_type);
 
   lldb_private::Status FindBundleBinaryInExecSearchPaths(
       const lldb_private::ModuleSpec &module_spec,
       lldb_private::Process *process, lldb::ModuleSP &module_sp,
       const lldb_private::FileSpecList *module_search_paths_ptr,
-      lldb::ModuleSP *old_module_sp_ptr, bool *did_create_ptr);
+      llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules, bool *did_create_ptr);
 
   static std::string FindComponentInPath(llvm::StringRef path,
                                          llvm::StringRef component);
-  static std::string FindXcodeContentsDirectoryInPath(llvm::StringRef path);
 
   std::string m_developer_directory;
+  llvm::StringMap<std::string> m_sdk_path;
+  std::mutex m_sdk_path_mutex;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(PlatformDarwin);
+  PlatformDarwin(const PlatformDarwin &) = delete;
+  const PlatformDarwin &operator=(const PlatformDarwin &) = delete;
 };
 
 #endif // LLDB_SOURCE_PLUGINS_PLATFORM_MACOSX_PLATFORMDARWIN_H

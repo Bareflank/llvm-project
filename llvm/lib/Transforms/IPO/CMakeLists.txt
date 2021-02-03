@@ -2,6 +2,7 @@ add_llvm_component_library(LLVMipo
   AlwaysInliner.cpp
   ArgumentPromotion.cpp
   Attributor.cpp
+  AttributorAttributes.cpp
   BarrierNoopPass.cpp
   BlockExtractor.cpp
   CalledValuePropagation.cpp
@@ -44,4 +45,5 @@ add_llvm_component_library(LLVMipo
 
   DEPENDS
   intrinsics_gen
+  omp_gen
   )

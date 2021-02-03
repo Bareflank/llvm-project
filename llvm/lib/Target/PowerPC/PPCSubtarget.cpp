@@ -78,6 +78,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasP8Crypto = false;
   HasP9Vector = false;
   HasP9Altivec = false;
+  HasP10Vector = false;
   HasPrefixInstrs = false;
   HasPCRelativeMemops = false;
   HasFCPSGN = false;
@@ -115,11 +116,13 @@ void PPCSubtarget::initializeEnvironment() {
   HasAddiLoadFusion = false;
   HasAddisLoadFusion = false;
   IsISA3_0 = false;
+  IsISA3_1 = false;
   UseLongCalls = false;
   SecurePlt = false;
   VectorsUseTwoUnits = false;
   UsePPCPreRASchedStrategy = false;
   UsePPCPostRASchedStrategy = false;
+  PredictableSelectIsExpensive = false;
 
   HasPOPCNTD = POPCNTD_Unavailable;
 }
@@ -177,7 +180,7 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 bool PPCSubtarget::enableMachineScheduler() const { return true; }
 
 bool PPCSubtarget::enableMachinePipeliner() const {
-  return (CPUDirective == PPC::DIR_PWR9) && EnableMachinePipeliner;
+  return getSchedModel().hasInstrSchedModel() && EnableMachinePipeliner;
 }
 
 bool PPCSubtarget::useDFAforSMS() const { return false; }
@@ -227,3 +230,8 @@ bool PPCSubtarget::isGVIndirectSymbol(const GlobalValue *GV) const {
 
 bool PPCSubtarget::isELFv2ABI() const { return TM.isELFv2ABI(); }
 bool PPCSubtarget::isPPC64() const { return TM.isPPC64(); }
+
+bool PPCSubtarget::isUsingPCRelativeCalls() const {
+  return isPPC64() && hasPCRelativeMemops() && isELFv2ABI() &&
+         CodeModel::Medium == getTargetMachine().getCodeModel();
+}

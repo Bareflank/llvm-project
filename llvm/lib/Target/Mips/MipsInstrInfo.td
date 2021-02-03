@@ -498,7 +498,7 @@ class MADD4 {
   list<Predicate> AdditionalPredicates = [HasMadd4];
 }
 
-// Classses used for separating expansions that differ based on the ABI in
+// Classes used for separating expansions that differ based on the ABI in
 // use.
 class ABI_N64 {
   list<Predicate> AdditionalPredicates = [IsN64];
@@ -1286,7 +1286,7 @@ def LUiORiPred  : PatLeaf<(imm), [{
   return isInt<32>(SVal) && (SVal & 0xffff);
 }]>;
 
-// Mips Address Mode! SDNode frameindex could possibily be a match
+// Mips Address Mode! SDNode frameindex could possibly be a match
 // since load and store instructions from stack used it.
 def addr :
   ComplexPattern<iPTR, 2, "selectIntAddr", [frameindex]>;
@@ -2589,6 +2589,22 @@ def : MipsInstAlias<"seq $rd, $imm",
                     (SEQIMacro GPR32Opnd:$rd, GPR32Opnd:$rd, simm32:$imm), 0>,
                     NOT_ASE_CNMIPS;
 
+def SNEMacro : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                                 (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                                 "sne $rd, $rs, $rt">, NOT_ASE_CNMIPS;
+
+def : MipsInstAlias<"sne $rd, $rs",
+                    (SNEMacro GPR32Opnd:$rd, GPR32Opnd:$rd, GPR32Opnd:$rs), 0>,
+                    NOT_ASE_CNMIPS;
+
+def SNEIMacro : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                                  (ins GPR32Opnd:$rs, simm32_relaxed:$imm),
+                                  "sne $rd, $rs, $imm">, NOT_ASE_CNMIPS;
+
+def : MipsInstAlias<"sne $rd, $imm",
+                    (SNEIMacro GPR32Opnd:$rd, GPR32Opnd:$rd, simm32:$imm), 0>,
+                    NOT_ASE_CNMIPS;
+
 def MULImmMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rd, GPR32Opnd:$rs,
                                                  simm32_relaxed:$imm),
                                     "mul\t$rd, $rs, $imm">,
@@ -2732,6 +2748,34 @@ let AdditionalPredicates = [NotInMicroMips] in {
                                   (ins GPR32Opnd:$rs, uimm32_coerced:$imm),
                                   "sgtu\t$rd, $rs, $imm">, GPR_32;
   def : MipsInstAlias<"sgtu $rs, $imm", (SGTUImm GPR32Opnd:$rs,
+                                                 GPR32Opnd:$rs,
+                                                 uimm32_coerced:$imm), 0>,
+        GPR_32;
+
+  def SLE : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                              (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                              "sle\t$rd, $rs, $rt">, ISA_MIPS1;
+  def : MipsInstAlias<"sle $rs, $rt",
+                      (SLE GPR32Opnd:$rs, GPR32Opnd:$rs, GPR32Opnd:$rt), 0>,
+        ISA_MIPS1;
+  def SLEImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                                 (ins GPR32Opnd:$rs, simm32:$imm),
+                                 "sle\t$rd, $rs, $imm">, GPR_32;
+  def : MipsInstAlias<"sle $rs, $imm", (SLEImm GPR32Opnd:$rs,
+                                               GPR32Opnd:$rs,
+                                               simm32:$imm), 0>,
+        GPR_32;
+
+  def SLEU : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                               (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                               "sleu\t$rd, $rs, $rt">, ISA_MIPS1;
+  def : MipsInstAlias<"sleu $rs, $rt",
+                      (SLEU GPR32Opnd:$rs, GPR32Opnd:$rs, GPR32Opnd:$rt), 0>,
+        ISA_MIPS1;
+  def SLEUImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                                  (ins GPR32Opnd:$rs, uimm32_coerced:$imm),
+                                  "sleu\t$rd, $rs, $imm">, GPR_32;
+  def : MipsInstAlias<"sleu $rs, $imm", (SLEUImm GPR32Opnd:$rs,
                                                  GPR32Opnd:$rs,
                                                  uimm32_coerced:$imm), 0>,
         GPR_32;

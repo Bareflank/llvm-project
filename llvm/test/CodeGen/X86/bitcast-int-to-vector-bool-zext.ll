@@ -260,9 +260,8 @@ define <4 x i64> @ext_i4_4i64(i4 %a0) {
 ;
 ; AVX1-LABEL: ext_i4_4i64:
 ; AVX1:       # %bb.0:
-; AVX1-NEXT:    # kill: def $edi killed $edi def $rdi
-; AVX1-NEXT:    vmovq %rdi, %xmm0
-; AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; AVX1-NEXT:    vmovd %edi, %xmm0
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
 ; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
@@ -555,9 +554,8 @@ define <8 x i64> @ext_i8_8i64(i8 %a0) {
 ;
 ; AVX1-LABEL: ext_i8_8i64:
 ; AVX1:       # %bb.0:
-; AVX1-NEXT:    # kill: def $edi killed $edi def $rdi
-; AVX1-NEXT:    vmovq %rdi, %xmm0
-; AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; AVX1-NEXT:    vmovd %edi, %xmm0
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm1
 ; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm1, %ymm0
 ; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
@@ -777,13 +775,13 @@ define <32 x i16> @ext_i32_32i16(i32 %a0) {
 ; AVX512F-NEXT:    kmovw %edi, %k1
 ; AVX512F-NEXT:    shrl $16, %edi
 ; AVX512F-NEXT:    kmovw %edi, %k2
-; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k2} {z}
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512F-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512F-NEXT:    vpsrlw $15, %ymm0, %ymm0
-; AVX512F-NEXT:    vpternlogd $255, %zmm1, %zmm1, %zmm1 {%k1} {z}
+; AVX512F-NEXT:    vpternlogd $255, %zmm1, %zmm1, %zmm1 {%k2} {z}
 ; AVX512F-NEXT:    vpmovdw %zmm1, %ymm1
 ; AVX512F-NEXT:    vpsrlw $15, %ymm1, %ymm1
-; AVX512F-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
+; AVX512F-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512VLBW-LABEL: ext_i32_32i16:

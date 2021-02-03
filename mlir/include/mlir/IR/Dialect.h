@@ -160,7 +160,7 @@ public:
 
   /// Lookup an interface for the given ID if one is registered, otherwise
   /// nullptr.
-  const DialectInterface *getRegisteredInterface(ClassID *interfaceID) {
+  const DialectInterface *getRegisteredInterface(TypeID interfaceID) {
     auto it = registeredInterfaces.find(interfaceID);
     return it != registeredInterfaces.end() ? it->getSecond().get() : nullptr;
   }
@@ -190,13 +190,19 @@ protected:
 
   /// This method is used by derived classes to add their types to the set.
   template <typename... Args> void addTypes() {
-    (void)std::initializer_list<int>{0, (addSymbol(Args::getClassID()), 0)...};
+    (void)std::initializer_list<int>{
+        0, (addType(Args::getTypeID(), AbstractType::get<Args>(*this)), 0)...};
   }
+  void addType(TypeID typeID, AbstractType &&typeInfo);
 
   /// This method is used by derived classes to add their attributes to the set.
   template <typename... Args> void addAttributes() {
-    (void)std::initializer_list<int>{0, (addSymbol(Args::getClassID()), 0)...};
+    (void)std::initializer_list<int>{
+        0,
+        (addAttribute(Args::getTypeID(), AbstractAttribute::get<Args>(*this)),
+         0)...};
   }
+  void addAttribute(TypeID typeID, AbstractAttribute &&attrInfo);
 
   /// Enable support for unregistered operations.
   void allowUnknownOperations(bool allow = true) { unknownOpsAllowed = allow; }
@@ -214,9 +220,6 @@ protected:
   }
 
 private:
-  // Register a symbol(e.g. type) with its given unique class identifier.
-  void addSymbol(const ClassID *const classID);
-
   Dialect(const Dialect &) = delete;
   void operator=(Dialect &) = delete;
 
@@ -241,26 +244,28 @@ private:
   bool unknownTypesAllowed = false;
 
   /// A collection of registered dialect interfaces.
-  DenseMap<ClassID *, std::unique_ptr<DialectInterface>> registeredInterfaces;
+  DenseMap<TypeID, std::unique_ptr<DialectInterface>> registeredInterfaces;
 
   /// Registers a specific dialect creation function with the global registry.
   /// Used through the registerDialect template.
-  /// Registrations are deduplicated by dialect ClassID and only the first
+  /// Registrations are deduplicated by dialect TypeID and only the first
   /// registration will be used.
   static void
-  registerDialectAllocator(const ClassID *classId,
+  registerDialectAllocator(TypeID typeID,
                            const DialectAllocatorFunction &function);
   template <typename ConcreteDialect>
   friend void registerDialect();
 };
 /// Registers all dialects and hooks from the global registries with the
 /// specified MLIRContext.
+/// Note: This method is not thread-safe.
 void registerAllDialects(MLIRContext *context);
 
 /// Utility to register a dialect. Client can register their dialect with the
 /// global registry by calling registerDialect<MyDialect>();
+/// Note: This method is not thread-safe.
 template <typename ConcreteDialect> void registerDialect() {
-  Dialect::registerDialectAllocator(ClassID::getID<ConcreteDialect>(),
+  Dialect::registerDialectAllocator(TypeID::get<ConcreteDialect>(),
                                     [](MLIRContext *ctx) {
                                       // Just allocate the dialect, the context
                                       // takes ownership of it.
@@ -280,5 +285,15 @@ template <typename ConcreteDialect> struct DialectRegistration {
 };
 
 } // namespace mlir
+
+namespace llvm {
+/// Provide isa functionality for Dialects.
+template <typename T>
+struct isa_impl<T, ::mlir::Dialect> {
+  static inline bool doit(const ::mlir::Dialect &dialect) {
+    return T::getDialectNamespace() == dialect.getNamespace();
+  }
+};
+} // namespace llvm
 
 #endif

@@ -421,7 +421,8 @@ nub_process_t DNBProcessAttachByName(const char *name, struct timespec *timeout,
   if (num_matching_proc_infos == 0) {
     DNBLogError("error: no processes match '%s'\n", name);
     return INVALID_NUB_PROCESS;
-  } else if (num_matching_proc_infos > 1) {
+  }
+  if (num_matching_proc_infos > 1) {
     DNBLogError("error: %llu processes match '%s':\n",
                 (uint64_t)num_matching_proc_infos, name);
     size_t i;
@@ -1391,10 +1392,14 @@ const char *DNBGetDeploymentInfo(nub_process_t pid,
                                  uint32_t& minor_version,
                                  uint32_t& patch_version) {
   MachProcessSP procSP;
-  if (GetProcessSP(pid, procSP))
-    return procSP->GetDeploymentInfo(lc, load_command_address,
-                                     major_version, minor_version,
-                                     patch_version);
+  if (GetProcessSP(pid, procSP)) {
+    // FIXME: This doesn't correct for older ios simulator and macCatalyst.
+    auto info = procSP->GetDeploymentInfo(lc, load_command_address);
+    major_version = info.major_version;
+    minor_version = info.minor_version;
+    patch_version = info.patch_version;
+    return procSP->GetPlatformString(info.platform);
+  }
   return nullptr;
 }
 

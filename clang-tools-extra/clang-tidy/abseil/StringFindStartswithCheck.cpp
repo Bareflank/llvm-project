@@ -12,8 +12,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Frontend/CompilerInstance.h"
-
-#include <cassert>
+#include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
 
 using namespace clang::ast_matchers;
 
@@ -26,8 +26,8 @@ StringFindStartswithCheck::StringFindStartswithCheck(StringRef Name,
     : ClangTidyCheck(Name, Context),
       StringLikeClasses(utils::options::parseStringList(
           Options.get("StringLikeClasses", "::std::basic_string"))),
-      IncludeStyle(utils::IncludeSorter::parseIncludeStyle(
-          Options.getLocalOrGlobal("IncludeStyle", "llvm"))),
+      IncludeStyle(Options.getLocalOrGlobal("IncludeStyle",
+                                            utils::IncludeSorter::IS_LLVM)),
       AbseilStringsMatchHeader(
           Options.get("AbseilStringsMatchHeader", "absl/strings/match.h")) {}
 
@@ -51,8 +51,8 @@ void StringFindStartswithCheck::registerMatchers(MatchFinder *Finder) {
       // Match [=!]= with a zero on one side and a string.find on the other.
       binaryOperator(
           hasAnyOperatorName("==", "!="),
-          hasEitherOperand(ignoringParenImpCasts(ZeroLiteral)),
-          hasEitherOperand(ignoringParenImpCasts(StringFind.bind("findexpr"))))
+          hasOperands(ignoringParenImpCasts(ZeroLiteral),
+                      ignoringParenImpCasts(StringFind.bind("findexpr"))))
           .bind("expr"),
       this);
 }
@@ -121,8 +121,7 @@ void StringFindStartswithCheck::storeOptions(
     ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "StringLikeClasses",
                 utils::options::serializeStringList(StringLikeClasses));
-  Options.store(Opts, "IncludeStyle",
-                utils::IncludeSorter::toString(IncludeStyle));
+  Options.store(Opts, "IncludeStyle", IncludeStyle);
   Options.store(Opts, "AbseilStringsMatchHeader", AbseilStringsMatchHeader);
 }
 

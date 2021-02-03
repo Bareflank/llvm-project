@@ -10,7 +10,6 @@
 #define LLVM_LIB_TARGET_X86_X86TARGETOBJECTFILE_H
 
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 
 namespace llvm {
 
@@ -44,7 +43,6 @@ namespace llvm {
     X86ELFTargetObjectFile() {
       PLTRelativeVariantKind = MCSymbolRefExpr::VK_PLT;
     }
-    void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
     /// Describe a TLS variable address within debug info.
     const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const override;
   };

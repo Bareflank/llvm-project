@@ -12,7 +12,6 @@
 
 #include "mlir/Analysis/AffineAnalysis.h"
 #include "mlir/Analysis/AffineStructures.h"
-#include "mlir/Analysis/Passes.h"
 #include "mlir/Analysis/Utils.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
@@ -26,20 +25,15 @@ using namespace mlir;
 
 namespace {
 
-// TODO(andydavis) Add common surrounding loop depth-wise dependence checks.
+// TODO: Add common surrounding loop depth-wise dependence checks.
 /// Checks dependences between all pairs of memref accesses in a Function.
 struct TestMemRefDependenceCheck
-    : public FunctionPass<TestMemRefDependenceCheck> {
+    : public PassWrapper<TestMemRefDependenceCheck, FunctionPass> {
   SmallVector<Operation *, 4> loadsAndStores;
   void runOnFunction() override;
 };
 
 } // end anonymous namespace
-
-std::unique_ptr<OpPassBase<FuncOp>>
-mlir::createTestMemRefDependenceCheckPass() {
-  return std::make_unique<TestMemRefDependenceCheck>();
-}
 
 // Returns a result string which represents the direction vector (if there was
 // a dependence), returns the string "false" otherwise.
@@ -91,7 +85,7 @@ static void checkDependences(ArrayRef<Operation *> loadsAndStores) {
             &dependenceComponents);
         assert(result.value != DependenceResult::Failure);
         bool ret = hasDependence(result);
-        // TODO(andydavis) Print dependence type (i.e. RAW, etc) and print
+        // TODO: Print dependence type (i.e. RAW, etc) and print
         // distance vectors as: ([2, 3], [0, 10]). Also, shorten distance
         // vectors from ([1, 1], [3, 3]) to (1, 3).
         srcOpInst->emitRemark("dependence from ")
@@ -109,7 +103,7 @@ void TestMemRefDependenceCheck::runOnFunction() {
   // Collect the loads and stores within the function.
   loadsAndStores.clear();
   getFunction().walk([&](Operation *op) {
-    if (isa<AffineLoadOp>(op) || isa<AffineStoreOp>(op))
+    if (isa<AffineLoadOp, AffineStoreOp>(op))
       loadsAndStores.push_back(op);
   });
 

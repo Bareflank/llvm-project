@@ -13,9 +13,10 @@
 #ifndef MLIR_IR_STORAGEUNIQUERSUPPORT_H
 #define MLIR_IR_STORAGEUNIQUERSUPPORT_H
 
+#include "mlir/Support/InterfaceSupport.h"
 #include "mlir/Support/LogicalResult.h"
-#include "mlir/Support/STLExtras.h"
 #include "mlir/Support/StorageUniquer.h"
+#include "mlir/Support/TypeID.h"
 
 namespace mlir {
 class AttributeStorage;
@@ -27,21 +28,45 @@ namespace detail {
 /// avoid the need to include Location.h.
 const AttributeStorage *generateUnknownStorageLocation(MLIRContext *ctx);
 
+//===----------------------------------------------------------------------===//
+// StorageUserTraitBase
+//===----------------------------------------------------------------------===//
+
+/// Helper class for implementing traits for storage classes. Clients are not
+/// expected to interact with this directly, so its members are all protected.
+template <typename ConcreteType, template <typename> class TraitType>
+class StorageUserTraitBase {
+protected:
+  /// Return the derived instance.
+  ConcreteType getInstance() const {
+    // We have to cast up to the trait type, then to the concrete type because
+    // the concrete type will multiply derive from the (content free) TraitBase
+    // class, and we need to be able to disambiguate the path for the C++
+    // compiler.
+    auto *trait = static_cast<const TraitType<ConcreteType> *>(this);
+    return *static_cast<const ConcreteType *>(trait);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// StorageUserBase
+//===----------------------------------------------------------------------===//
+
 /// Utility class for implementing users of storage classes uniqued by a
 /// StorageUniquer. Clients are not expected to interact with this class
 /// directly.
 template <typename ConcreteT, typename BaseT, typename StorageT,
-          typename UniquerT>
-class StorageUserBase : public BaseT {
+          typename UniquerT, template <typename T> class... Traits>
+class StorageUserBase : public BaseT, public Traits<ConcreteT>... {
 public:
   using BaseT::BaseT;
 
   /// Utility declarations for the concrete attribute class.
-  using Base = StorageUserBase<ConcreteT, BaseT, StorageT, UniquerT>;
+  using Base = StorageUserBase<ConcreteT, BaseT, StorageT, UniquerT, Traits...>;
   using ImplType = StorageT;
 
   /// Return a unique identifier for the concrete type.
-  static ClassID *getClassID() { return ClassID::getID<ConcreteT>(); }
+  static TypeID getTypeID() { return TypeID::get<ConcreteT>(); }
 
   /// Provide a default implementation of 'classof' that invokes a 'kindof'
   /// method on the concrete type.
@@ -49,6 +74,12 @@ public:
     static_assert(std::is_convertible<ConcreteT, T>::value,
                   "casting from a non-convertible type");
     return ConcreteT::kindof(val.getKind());
+  }
+
+  /// Returns an interface map for the interfaces registered to this storage
+  /// user. This should not be used directly.
+  static detail::InterfaceMap getInterfaceMap() {
+    return detail::InterfaceMap::template get<Traits<ConcreteT>...>();
   }
 
 protected:

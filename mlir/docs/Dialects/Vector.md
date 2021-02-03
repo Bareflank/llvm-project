@@ -1,4 +1,6 @@
-# Vector Dialect
+# 'vector' Dialect
+
+[TOC]
 
 MLIR supports multi-dimensional `vector` types and custom operations on those
 types. A generic, retargetable, higher-order ``vector`` type (`n-D` with `n >
@@ -42,7 +44,7 @@ bottom-up abstractions:
 intrinsics. This is referred to as the `LLVM` level.
 2. Set of machine-specific operations and types that are built to translate
 almost 1-1 with the HW ISA. This is referred to as the Hardware Vector level;
-a.k.a `HWV`. For instance, we have (a) a `NVVM` dialect (for `CUDA`) with
+a.k.a `HWV`. For instance, we have (a) the `NVVM` dialect (for `CUDA`) with
 tensor core ops, (b) accelerator-specific dialects (internal), a potential
 (future) `CPU` dialect to capture `LLVM` intrinsics more closely and other
 dialects for specific hardware. Ideally this should be auto-generated as much
@@ -363,7 +365,7 @@ unsurprising because historically, the vast majority of HW only supports `1-D`
 vector registers. We note that multiple HW vendors are in the process of
 evolving to higher-dimensional physical vectors.
 
-In the following discussion, let's assume the HW vector size is `1-D and the
+In the following discussion, let's assume the HW vector size is `1-D` and the
 SW vector size is `n-D`, with `n >= 1`. The same discussion would apply with
 `2-D` HW `vector` size and `n >= 2`. In this context, most HW exhibit a vector
 register file. The number of such vectors is fixed.
@@ -488,6 +490,6 @@ low-level abstraction.
 The use of special intrinsics in a `1-D` LLVM world is still available thanks
 to an explicit `vector.cast` op.
 
+## Operations
 
-### Operations
-
+[include "Dialects/VectorOps.md"]

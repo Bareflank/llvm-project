@@ -70,7 +70,9 @@ uint32_t CPlusPlusLanguage::GetPluginVersion() { return 1; }
 // Static Functions
 
 Language *CPlusPlusLanguage::CreateInstance(lldb::LanguageType language) {
-  if (Language::LanguageIsCPlusPlus(language))
+  // Use plugin for C++ but not for Objective-C++ (which has its own plugin).
+  if (Language::LanguageIsCPlusPlus(language) &&
+      language != eLanguageTypeObjC_plus_plus)
     return new CPlusPlusLanguage();
   return nullptr;
 }
@@ -127,7 +129,7 @@ static bool IsTrivialBasename(const llvm::StringRef &basename) {
     return false; // Empty string or "~"
 
   if (!std::isalpha(basename[idx]) && basename[idx] != '_')
-    return false; // First charater (after removing the possible '~'') isn't in
+    return false; // First character (after removing the possible '~'') isn't in
                   // [A-Za-z_]
 
   // Read all characters matching [A-Za-z_0-9]
@@ -611,6 +613,15 @@ static void LoadLibCxxFormatters(lldb::TypeCategoryImplSP cpp_category_sp) {
       "shared_ptr synthetic children",
       ConstString("^(std::__[[:alnum:]]+::)shared_ptr<.+>(( )?&)?$"),
       stl_synth_flags, true);
+
+  ConstString libcxx_std_unique_ptr_regex(
+      "^std::__[[:alnum:]]+::unique_ptr<.+>(( )?&)?$");
+  AddCXXSynthetic(
+      cpp_category_sp,
+      lldb_private::formatters::LibcxxUniquePtrSyntheticFrontEndCreator,
+      "unique_ptr synthetic children", libcxx_std_unique_ptr_regex,
+      stl_synth_flags, true);
+
   AddCXXSynthetic(
       cpp_category_sp,
       lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator,
@@ -715,6 +726,10 @@ static void LoadLibCxxFormatters(lldb::TypeCategoryImplSP cpp_category_sp) {
                 "libc++ std::weak_ptr summary provider",
                 ConstString("^std::__[[:alnum:]]+::weak_ptr<.+>(( )?&)?$"),
                 stl_summary_flags, true);
+  AddCXXSummary(cpp_category_sp,
+                lldb_private::formatters::LibcxxUniquePointerSummaryProvider,
+                "libc++ std::unique_ptr summary provider",
+                libcxx_std_unique_ptr_regex, stl_summary_flags, true);
 
   AddCXXSynthetic(
       cpp_category_sp,

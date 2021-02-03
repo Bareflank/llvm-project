@@ -57,7 +57,7 @@ public:
   GetSharedModule(const lldb_private::ModuleSpec &module_spec,
                   lldb_private::Process *process, lldb::ModuleSP &module_sp,
                   const lldb_private::FileSpecList *module_search_paths_ptr,
-                  lldb::ModuleSP *old_module_sp_ptr,
+                  llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules,
                   bool *did_create_ptr) override;
 
   bool GetSupportedArchitectureAtIndex(uint32_t idx,
@@ -172,7 +172,8 @@ public:
                                                           // dSYMs next to them
   lldb_private::LazyBool m_ios_debug_session;
 
-  DISALLOW_COPY_AND_ASSIGN(PlatformDarwinKernel);
+  PlatformDarwinKernel(const PlatformDarwinKernel &) = delete;
+  const PlatformDarwinKernel &operator=(const PlatformDarwinKernel &) = delete;
 };
 
 #else // __APPLE__

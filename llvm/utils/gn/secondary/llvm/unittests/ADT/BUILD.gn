@@ -15,6 +15,7 @@ unittest("ADTTests") {
     "APSIntTest.cpp",
     "AnyTest.cpp",
     "ArrayRefTest.cpp",
+    "BitFieldsTest.cpp",
     "BitVectorTest.cpp",
     "BitmaskEnumTest.cpp",
     "BreadthFirstIteratorTest.cpp",
@@ -80,5 +81,8 @@ unittest("ADTTests") {
     "TinyPtrVectorTest.cpp",
     "TripleTest.cpp",
     "TwineTest.cpp",
+    "TypeSwitchTest.cpp",
+    "TypeTraitsTest.cpp",
+    "WaymarkingTest.cpp",
   ]
 }
