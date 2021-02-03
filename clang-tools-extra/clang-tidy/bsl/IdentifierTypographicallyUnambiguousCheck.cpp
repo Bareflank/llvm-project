@@ -10,8 +10,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
 using namespace clang::ast_matchers;
 
