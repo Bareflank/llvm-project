@@ -22,7 +22,7 @@ config.test_format = lit.formats.ShTest(not llvm_config.use_lit_shell)
 
 # suffixes: A list of file extensions to treat as test files. This is overriden
 # by individual lit.local.cfg files in the test subdirectories.
-config.suffixes = ['.ll', '.c', '.cxx', '.test', '.txt', '.s', '.mir']
+config.suffixes = ['.ll', '.c', '.test', '.txt', '.s', '.mir', '.yaml']
 
 # excludes: A list of directories to exclude from the testsuite. The 'Inputs'
 # subdirectories contain auxiliary inputs for various tests in their parent
@@ -146,10 +146,10 @@ tools = [
 # FIXME: Why do we have both `lli` and `%lli` that do slightly different things?
 tools.extend([
     'dsymutil', 'lli', 'lli-child-target', 'llvm-ar', 'llvm-as',
-    'llvm-bcanalyzer', 'llvm-config', 'llvm-cov', 'llvm-cxxdump', 'llvm-cvtres',
-    'llvm-diff', 'llvm-dis', 'llvm-dwarfdump', 'llvm-exegesis', 'llvm-extract',
-    'llvm-isel-fuzzer', 'llvm-ifs', 'llvm-install-name-tool',
-    'llvm-jitlink', 'llvm-opt-fuzzer', 'llvm-lib',
+    'llvm-addr2line', 'llvm-bcanalyzer', 'llvm-config', 'llvm-cov',
+    'llvm-cxxdump', 'llvm-cvtres', 'llvm-diff', 'llvm-dis', 'llvm-dwarfdump',
+    'llvm-exegesis', 'llvm-extract', 'llvm-isel-fuzzer', 'llvm-ifs',
+    'llvm-install-name-tool', 'llvm-jitlink', 'llvm-opt-fuzzer', 'llvm-lib',
     'llvm-link', 'llvm-lto', 'llvm-lto2', 'llvm-mc', 'llvm-mca',
     'llvm-modextract', 'llvm-nm', 'llvm-objcopy', 'llvm-objdump',
     'llvm-pdbutil', 'llvm-profdata', 'llvm-ranlib', 'llvm-rc', 'llvm-readelf',
@@ -203,15 +203,24 @@ if config.build_examples:
 if config.linked_bye_extension:
     config.substitutions.append(('%llvmcheckext', 'CHECK-EXT'))
     config.substitutions.append(('%loadbye', ''))
+    config.substitutions.append(('%loadnewpmbye', ''))
 else:
     config.substitutions.append(('%llvmcheckext', 'CHECK-NOEXT'))
     config.substitutions.append(('%loadbye',
                                  '-load={}/Bye{}'.format(config.llvm_shlib_dir,
-                                                                  config.llvm_shlib_ext)))
+                                                         config.llvm_shlib_ext)))
+    config.substitutions.append(('%loadnewpmbye',
+                                 '-load-pass-plugin={}/Bye{}'
+                                 .format(config.llvm_shlib_dir,
+                                         config.llvm_shlib_ext)))
+
 
 # Static libraries are not built if BUILD_SHARED_LIBS is ON.
 if not config.build_shared_libs and not config.link_llvm_dylib:
     config.available_features.add('static-libs')
+
+if config.have_tf_aot:
+    config.available_features.add("have_tf_aot")
 
 def have_cxx_shared_library():
     readobj_exe = lit.util.which('llvm-readobj', config.llvm_tools_dir)

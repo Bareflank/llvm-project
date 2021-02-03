@@ -61,6 +61,8 @@ public:
     LLVM::ensureDistinctSuccessors(m);
 
     T translator(m, std::move(llvmModule));
+    if (failed(translator.convertFunctionSignatures()))
+      return nullptr;
     if (failed(translator.convertGlobals()))
       return nullptr;
     if (failed(translator.convertFunctions()))
@@ -83,6 +85,10 @@ protected:
 
   virtual LogicalResult convertOperation(Operation &op,
                                          llvm::IRBuilder<> &builder);
+  virtual LogicalResult convertOmpOperation(Operation &op,
+                                            llvm::IRBuilder<> &builder);
+  virtual LogicalResult convertOmpParallel(Operation &op,
+                                           llvm::IRBuilder<> &builder);
   static std::unique_ptr<llvm::Module> prepareLLVMModule(Operation *m);
 
   /// A helper to look up remapped operands in the value remapping table.
@@ -92,10 +98,10 @@ private:
   /// Check whether the module contains only supported ops directly in its body.
   static LogicalResult checkSupportedModuleOps(Operation *m);
 
+  LogicalResult convertFunctionSignatures();
   LogicalResult convertFunctions();
   LogicalResult convertGlobals();
   LogicalResult convertOneFunction(LLVMFuncOp func);
-  void connectPHINodes(LLVMFuncOp func);
   LogicalResult convertBlock(Block &bb, bool ignoreArguments);
 
   llvm::Constant *getLLVMConstant(llvm::Type *llvmType, Attribute attr,
@@ -104,7 +110,6 @@ private:
   /// Original and translated module.
   Operation *mlirModule;
   std::unique_ptr<llvm::Module> llvmModule;
-
   /// A converter for translating debug information.
   std::unique_ptr<detail::DebugTranslation> debugTranslation;
 
@@ -112,6 +117,8 @@ private:
   std::unique_ptr<llvm::OpenMPIRBuilder> ompBuilder;
   /// Precomputed pointer to OpenMP dialect.
   const Dialect *ompDialect;
+  /// Pointer to the llvmDialect;
+  LLVMDialect *llvmDialect;
 
   /// Mappings between llvm.mlir.global definitions and corresponding globals.
   DenseMap<Operation *, llvm::GlobalValue *> globalsMapping;

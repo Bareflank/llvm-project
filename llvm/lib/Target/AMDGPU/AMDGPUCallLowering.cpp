@@ -16,6 +16,7 @@
 #include "AMDGPU.h"
 #include "AMDGPUISelLowering.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDGPUTargetMachine.h"
 #include "SIISelLowering.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
@@ -128,15 +129,18 @@ struct IncomingArgHandler : public CallLowering::ValueHandler {
     }
   }
 
-  void assignValueToAddress(Register ValVReg, Register Addr, uint64_t Size,
+  void assignValueToAddress(Register ValVReg, Register Addr, uint64_t MemSize,
                             MachinePointerInfo &MPO, CCValAssign &VA) override {
     MachineFunction &MF = MIRBuilder.getMF();
-    unsigned Align = inferAlignmentFromPtrInfo(MF, MPO);
+
+    // The reported memory location may be wider than the value.
+    const LLT RegTy = MRI.getType(ValVReg);
+    MemSize = std::min(static_cast<uint64_t>(RegTy.getSizeInBytes()), MemSize);
 
     // FIXME: Get alignment
     auto MMO = MF.getMachineMemOperand(
-        MPO, MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant, Size,
-        Align);
+        MPO, MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant, MemSize,
+        inferAlignFromPtrInfo(MF, MPO));
     MIRBuilder.buildLoad(ValVReg, Addr, *MMO);
   }
 
@@ -405,9 +409,8 @@ Register AMDGPUCallLowering::lowerParameterPtr(MachineIRBuilder &B,
   return B.buildPtrAdd(PtrType, KernArgSegmentVReg, OffsetReg).getReg(0);
 }
 
-void AMDGPUCallLowering::lowerParameter(MachineIRBuilder &B,
-                                        Type *ParamTy, uint64_t Offset,
-                                        unsigned Align,
+void AMDGPUCallLowering::lowerParameter(MachineIRBuilder &B, Type *ParamTy,
+                                        uint64_t Offset, Align Alignment,
                                         Register DstReg) const {
   MachineFunction &MF = B.getMF();
   const Function &F = MF.getFunction();
@@ -416,11 +419,11 @@ void AMDGPUCallLowering::lowerParameter(MachineIRBuilder &B,
   unsigned TypeSize = DL.getTypeStoreSize(ParamTy);
   Register PtrReg = lowerParameterPtr(B, ParamTy, Offset);
 
-  MachineMemOperand *MMO =
-      MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOLoad |
-                                       MachineMemOperand::MODereferenceable |
-                                       MachineMemOperand::MOInvariant,
-                                       TypeSize, Align);
+  MachineMemOperand *MMO = MF.getMachineMemOperand(
+      PtrInfo,
+      MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
+          MachineMemOperand::MOInvariant,
+      TypeSize, Alignment);
 
   B.buildLoad(DstReg, PtrReg, *MMO);
 }
@@ -433,19 +436,19 @@ static void allocateHSAUserSGPRs(CCState &CCInfo,
                                  SIMachineFunctionInfo &Info) {
   // FIXME: How should these inputs interact with inreg / custom SGPR inputs?
   if (Info.hasPrivateSegmentBuffer()) {
-    unsigned PrivateSegmentBufferReg = Info.addPrivateSegmentBuffer(TRI);
+    Register PrivateSegmentBufferReg = Info.addPrivateSegmentBuffer(TRI);
     MF.addLiveIn(PrivateSegmentBufferReg, &AMDGPU::SGPR_128RegClass);
     CCInfo.AllocateReg(PrivateSegmentBufferReg);
   }
 
   if (Info.hasDispatchPtr()) {
-    unsigned DispatchPtrReg = Info.addDispatchPtr(TRI);
+    Register DispatchPtrReg = Info.addDispatchPtr(TRI);
     MF.addLiveIn(DispatchPtrReg, &AMDGPU::SGPR_64RegClass);
     CCInfo.AllocateReg(DispatchPtrReg);
   }
 
   if (Info.hasQueuePtr()) {
-    unsigned QueuePtrReg = Info.addQueuePtr(TRI);
+    Register QueuePtrReg = Info.addQueuePtr(TRI);
     MF.addLiveIn(QueuePtrReg, &AMDGPU::SGPR_64RegClass);
     CCInfo.AllocateReg(QueuePtrReg);
   }
@@ -462,13 +465,13 @@ static void allocateHSAUserSGPRs(CCState &CCInfo,
   }
 
   if (Info.hasDispatchID()) {
-    unsigned DispatchIDReg = Info.addDispatchID(TRI);
+    Register DispatchIDReg = Info.addDispatchID(TRI);
     MF.addLiveIn(DispatchIDReg, &AMDGPU::SGPR_64RegClass);
     CCInfo.AllocateReg(DispatchIDReg);
   }
 
   if (Info.hasFlatScratchInit()) {
-    unsigned FlatScratchInitReg = Info.addFlatScratchInit(TRI);
+    Register FlatScratchInitReg = Info.addFlatScratchInit(TRI);
     MF.addLiveIn(FlatScratchInitReg, &AMDGPU::SGPR_64RegClass);
     CCInfo.AllocateReg(FlatScratchInitReg);
   }
@@ -495,7 +498,7 @@ bool AMDGPUCallLowering::lowerFormalArgumentsKernel(
   allocateHSAUserSGPRs(CCInfo, B, MF, *TRI, *Info);
 
   unsigned i = 0;
-  const unsigned KernArgBaseAlign = 16;
+  const Align KernArgBaseAlign(16);
   const unsigned BaseOffset = Subtarget->getExplicitKernelArgOffset(F);
   uint64_t ExplicitArgOffset = 0;
 
@@ -506,19 +509,24 @@ bool AMDGPUCallLowering::lowerFormalArgumentsKernel(
     if (AllocSize == 0)
       continue;
 
-    unsigned ABIAlign = DL.getABITypeAlignment(ArgTy);
+    Align ABIAlign = DL.getABITypeAlign(ArgTy);
 
     uint64_t ArgOffset = alignTo(ExplicitArgOffset, ABIAlign) + BaseOffset;
     ExplicitArgOffset = alignTo(ExplicitArgOffset, ABIAlign) + AllocSize;
+
+    if (Arg.use_empty()) {
+      ++i;
+      continue;
+    }
 
     ArrayRef<Register> OrigArgRegs = VRegs[i];
     Register ArgReg =
       OrigArgRegs.size() == 1
       ? OrigArgRegs[0]
       : MRI.createGenericVirtualRegister(getLLTForType(*ArgTy, DL));
-    unsigned Align = MinAlign(KernArgBaseAlign, ArgOffset);
-    ArgOffset = alignTo(ArgOffset, DL.getABITypeAlignment(ArgTy));
-    lowerParameter(B, ArgTy, ArgOffset, Align, ArgReg);
+
+    Align Alignment = commonAlignment(KernArgBaseAlign, ArgOffset);
+    lowerParameter(B, ArgTy, ArgOffset, Alignment, ArgReg);
     if (OrigArgRegs.size() > 1)
       unpackRegs(OrigArgRegs, ArgReg, ArgTy, B);
     ++i;
@@ -786,11 +794,17 @@ bool AMDGPUCallLowering::lowerFormalArguments(
   if (!MBB.empty())
     B.setInstr(*MBB.begin());
 
+  if (!IsEntryFunc) {
+    // For the fixed ABI, pass workitem IDs in the last argument register.
+    if (AMDGPUTargetMachine::EnableFixedFunctionABI)
+      TLI.allocateSpecialInputVGPRsFixed(CCInfo, MF, *TRI, *Info);
+  }
+
   FormalArgHandler Handler(B, MRI, AssignFn);
   if (!handleAssignments(CCInfo, ArgLocs, B, SplitArgs, Handler))
     return false;
 
-  if (!IsEntryFunc) {
+  if (!IsEntryFunc && !AMDGPUTargetMachine::EnableFixedFunctionABI) {
     // Special inputs come after user arguments.
     TLI.allocateSpecialInputVGPRs(CCInfo, MF, *TRI, *Info);
   }

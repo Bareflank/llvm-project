@@ -17,7 +17,7 @@ using namespace llvm;
 
 SDValue AArch64SelectionDAGInfo::EmitTargetCodeForMemset(
     SelectionDAG &DAG, const SDLoc &dl, SDValue Chain, SDValue Dst, SDValue Src,
-    SDValue Size, unsigned Align, bool isVolatile,
+    SDValue Size, Align Alignment, bool isVolatile,
     MachinePointerInfo DstPtrInfo) const {
   // Check to see if there is a specialized entry-point for memory zeroing.
   ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
@@ -117,7 +117,7 @@ SDValue AArch64SelectionDAGInfo::EmitTargetCodeForSetTag(
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineMemOperand *BaseMemOperand = MF.getMachineMemOperand(
-      DstPtrInfo, MachineMemOperand::MOStore, ObjSize, 16);
+      DstPtrInfo, MachineMemOperand::MOStore, ObjSize, Align(16));
 
   bool UseSetTagRangeLoop =
       kSetTagLoopThreshold >= 0 && (int)ObjSize >= kSetTagLoopThreshold;

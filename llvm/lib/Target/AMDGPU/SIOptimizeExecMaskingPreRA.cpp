@@ -71,10 +71,8 @@ FunctionPass *llvm::createSIOptimizeExecMaskingPreRAPass() {
 static bool isFullExecCopy(const MachineInstr& MI, const GCNSubtarget& ST) {
   unsigned Exec = ST.isWave32() ? AMDGPU::EXEC_LO : AMDGPU::EXEC;
 
-  if (MI.isCopy() && MI.getOperand(1).getReg() == Exec) {
-    assert(MI.isFullCopy());
+  if (MI.isFullCopy() && MI.getOperand(1).getReg() == Exec)
     return true;
-  }
 
   return false;
 }
@@ -170,6 +168,11 @@ static unsigned optimizeVcndVcmpPair(MachineBasicBlock &MBB,
               And->getOperand(0).getReg())
           .addReg(ExecReg)
           .addReg(CCReg, getUndefRegState(CC->isUndef()), CC->getSubReg());
+  MachineOperand &AndSCC = And->getOperand(3);
+  assert(AndSCC.getReg() == AMDGPU::SCC);
+  MachineOperand &Andn2SCC = Andn2->getOperand(3);
+  assert(Andn2SCC.getReg() == AMDGPU::SCC);
+  Andn2SCC.setIsDead(AndSCC.isDead());
   And->eraseFromParent();
   LIS->InsertMachineInstrInMaps(*Andn2);
 

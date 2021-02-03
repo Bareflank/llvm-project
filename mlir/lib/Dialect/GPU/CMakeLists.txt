@@ -10,17 +10,18 @@ add_mlir_dialect_library(MLIRGPU
 
   DEPENDS
   MLIRGPUOpsIncGen
-  )
-target_link_libraries(MLIRGPU
-  PUBLIC
+  MLIRGPUPassIncGen
+  MLIRParallelLoopMapperAttrGen
+  MLIRParallelLoopMapperEnumsGen
+
+  LINK_LIBS PUBLIC
   MLIREDSC
   MLIRIR
   MLIRLLVMIR
-  MLIRLoopOps
+  MLIRSCF
   MLIRPass
-  MLIRSideEffects
+  MLIRSideEffectInterfaces
   MLIRStandardOps
   MLIRSupport
   MLIRTransformUtils
-  LLVMSupport
   )

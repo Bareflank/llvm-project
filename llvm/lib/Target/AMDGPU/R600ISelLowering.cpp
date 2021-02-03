@@ -1265,10 +1265,11 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     return scalarizeVectorStore(StoreNode, DAG);
   }
 
-  unsigned Align = StoreNode->getAlignment();
-  if (Align < MemVT.getStoreSize() &&
-      !allowsMisalignedMemoryAccesses(
-          MemVT, AS, Align, StoreNode->getMemOperand()->getFlags(), nullptr)) {
+  Align Alignment = StoreNode->getAlign();
+  if (Alignment < MemVT.getStoreSize() &&
+      !allowsMisalignedMemoryAccesses(MemVT, AS, Alignment.value(),
+                                      StoreNode->getMemOperand()->getFlags(),
+                                      nullptr)) {
     return expandUnalignedStore(StoreNode, DAG);
   }
 
@@ -1548,7 +1549,7 @@ SDValue R600TargetLowering::lowerFrameIndex(SDValue Op,
   FrameIndexSDNode *FIN = cast<FrameIndexSDNode>(Op);
 
   unsigned FrameIndex = FIN->getIndex();
-  unsigned IgnoredFrameReg;
+  Register IgnoredFrameReg;
   unsigned Offset =
     TFL->getFrameIndexReference(MF, FrameIndex, IgnoredFrameReg);
   return DAG.getConstant(Offset * 4 * TFL->getStackWidth(MF), SDLoc(Op),

@@ -41,7 +41,6 @@
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -83,6 +82,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
+#include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
 #include <cassert>
 #include <cstdint>
@@ -1813,7 +1813,7 @@ static bool mustExecuteUBIfPoisonOnPathTo(Instruction *Root,
 
     // If we can't analyze propagation through this instruction, just skip it
     // and transitive users.  Safe as false is a conservative result.
-    if (!propagatesFullPoison(I) && I != Root)
+    if (!propagatesPoison(I) && I != Root)
       continue;
 
     if (KnownPoison.insert(I).second)
@@ -2219,7 +2219,7 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
   // update the branch to use the new comparison; in the common case this
   // will make old comparison dead.
   BI->setCondition(Cond);
-  DeadInsts.push_back(OrigCond);
+  DeadInsts.emplace_back(OrigCond);
 
   ++NumLFTR;
   return true;
@@ -2411,7 +2411,7 @@ bool IndVarSimplify::optimizeLoopExits(Loop *L, SCEVExpander &Rewriter) {
                                      IsTaken ? ExitIfTrue : !ExitIfTrue);
     BI->setCondition(NewCond);
     if (OldCond->use_empty())
-      DeadInsts.push_back(OldCond);
+      DeadInsts.emplace_back(OldCond);
   };
 
   bool Changed = false;
@@ -2637,7 +2637,7 @@ bool IndVarSimplify::predicateLoopExits(Loop *L, SCEVExpander &Rewriter) {
     Value *OldCond = BI->getCondition();
     BI->setCondition(NewCond);
     if (OldCond->use_empty())
-      DeadInsts.push_back(OldCond);
+      DeadInsts.emplace_back(OldCond);
     Changed = true;
   }
 

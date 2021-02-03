@@ -226,6 +226,7 @@ typedef std::function<ErrorOr<DwarfFile &>(StringRef ContainerName,
                                            StringRef Path)>
     objFileLoader;
 typedef std::map<std::string, std::string> swiftInterfacesMap;
+typedef std::map<std::string, std::string> objectPrefixMap;
 
 /// The core of the Dwarf linking logic.
 ///
@@ -258,6 +259,9 @@ public:
 
   /// Allows to generate log of linking process to the standard output.
   void setVerbosity(bool Verbose) { Options.Verbose = Verbose; }
+
+  /// Print statistics to standard output.
+  void setStatistics(bool Statistics) { Options.Statistics = Statistics; }
 
   /// Do not emit linked dwarf info.
   void setNoOutput(bool NoOut) { Options.NoOutput = NoOut; }
@@ -309,6 +313,11 @@ public:
   /// Set map for Swift interfaces.
   void setSwiftInterfacesMap(swiftInterfacesMap *Map) {
     Options.ParseableSwiftInterfaces = Map;
+  }
+
+  /// Set prefix map for objects.
+  void setObjectPrefixMap(objectPrefixMap *Map) {
+    Options.ObjectPrefixMap = Map;
   }
 
 private:
@@ -550,9 +559,10 @@ private:
     /// Construct the output DIE tree by cloning the DIEs we
     /// chose to keep above. If there are no valid relocs, then there's
     /// nothing to clone/emit.
-    void cloneAllCompileUnits(DWARFContext &DwarfContext, const DwarfFile &File,
-                              OffsetsStringPool &StringPool,
-                              bool IsLittleEndian);
+    uint64_t cloneAllCompileUnits(DWARFContext &DwarfContext,
+                                  const DwarfFile &File,
+                                  OffsetsStringPool &StringPool,
+                                  bool IsLittleEndian);
 
   private:
     using AttributeSpec = DWARFAbbreviationDeclaration::AttributeSpec;
@@ -575,6 +585,9 @@ private:
 
       /// Value of DW_AT_call_return_pc in the input DIE
       uint64_t OrigCallReturnPc = 0;
+
+      /// Value of DW_AT_call_pc in the input DIE
+      uint64_t OrigCallPc = 0;
 
       /// Offset to apply to PC addresses inside a function.
       int64_t PCOffset = 0;
@@ -748,6 +761,9 @@ private:
     /// Generate processing log to the standard output.
     bool Verbose = false;
 
+    /// Print statistics.
+    bool Statistics = false;
+
     /// Skip emitting output
     bool NoOutput = false;
 
@@ -780,6 +796,9 @@ private:
     /// per compile unit, which is why this is a std::map.
     /// this is dsymutil specific fag.
     swiftInterfacesMap *ParseableSwiftInterfaces = nullptr;
+
+    /// A list of remappings to apply to file paths.
+    objectPrefixMap *ObjectPrefixMap = nullptr;
   } Options;
 };
 

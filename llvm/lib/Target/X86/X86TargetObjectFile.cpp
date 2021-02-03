@@ -18,6 +18,7 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 using namespace dwarf;
@@ -62,9 +63,4 @@ const MCExpr *X86_64MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
 const MCExpr *X86ELFTargetObjectFile::getDebugThreadLocalSymbol(
     const MCSymbol *Sym) const {
   return MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
-}
-
-void X86ELFTargetObjectFile::Initialize(MCContext &Ctx,
-                                        const TargetMachine &TM) {
-  TargetLoweringObjectFileELF::Initialize(Ctx, TM);
 }

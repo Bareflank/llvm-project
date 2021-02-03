@@ -89,6 +89,8 @@ public:
   void emitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                           const MachineBasicBlock *MBB, unsigned JTI);
 
+  void emitFunctionEntryLabel() override;
+
   void LowerJumpTableDestSmall(MCStreamer &OutStreamer, const MachineInstr &MI);
 
   void LowerSTACKMAP(MCStreamer &OutStreamer, StackMaps &SM,
@@ -113,6 +115,8 @@ public:
                                    const MachineInstr *MI);
 
   void emitInstruction(const MachineInstr *MI) override;
+
+  void emitFunctionHeaderComment() override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AsmPrinter::getAnalysisUsage(AU);
@@ -241,6 +245,13 @@ void AArch64AsmPrinter::emitStartOfAsmFile(Module &M) {
   OutStreamer->SwitchSection(Cur);
 }
 
+void AArch64AsmPrinter::emitFunctionHeaderComment() {
+  const AArch64FunctionInfo *FI = MF->getInfo<AArch64FunctionInfo>();
+  Optional<std::string> OutlinerString = FI->getOutliningStyle();
+  if (OutlinerString != None)
+    OutStreamer->GetCommentOS() << ' ' << OutlinerString;
+}
+
 void AArch64AsmPrinter::LowerPATCHABLE_FUNCTION_ENTER(const MachineInstr &MI)
 {
   const Function &F = MF->getFunction();
@@ -304,7 +315,7 @@ void AArch64AsmPrinter::EmitSled(const MachineInstr &MI, SledKind Kind)
     EmitToStreamer(*OutStreamer, MCInstBuilder(AArch64::HINT).addImm(0));
 
   OutStreamer->emitLabel(Target);
-  recordSled(CurSled, MI, Kind);
+  recordSled(CurSled, MI, Kind, 2);
 }
 
 void AArch64AsmPrinter::LowerHWASAN_CHECK_MEMACCESS(const MachineInstr &MI) {
@@ -740,11 +751,10 @@ void AArch64AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   assert(NOps == 4);
   OS << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
   // cast away const; DIetc do not take const operands for some reason.
-  OS << cast<DILocalVariable>(MI->getOperand(NOps - 2).getMetadata())
-            ->getName();
+  OS << MI->getDebugVariable()->getName();
   OS << " <- ";
   // Frame address.  Currently handles register +- offset only.
-  assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
+  assert(MI->getDebugOperand(0).isReg() && MI->isDebugOffsetImm());
   OS << '[';
   printOperand(MI, 0, OS);
   OS << '+';
@@ -812,6 +822,19 @@ void AArch64AsmPrinter::emitJumpTableEntry(const MachineJumpTableInfo *MJTI,
   }
 
   OutStreamer->emitValue(Value, Size);
+}
+
+void AArch64AsmPrinter::emitFunctionEntryLabel() {
+  if (MF->getFunction().getCallingConv() == CallingConv::AArch64_VectorCall ||
+      MF->getFunction().getCallingConv() ==
+          CallingConv::AArch64_SVE_VectorCall ||
+      STI->getRegisterInfo()->hasSVEArgsOrReturn(MF)) {
+    auto *TS =
+        static_cast<AArch64TargetStreamer *>(OutStreamer->getTargetStreamer());
+    TS->emitDirectiveVariantPCS(CurrentFnSym);
+  }
+
+  return AsmPrinter::emitFunctionEntryLabel();
 }
 
 /// Small jump tables contain an unsigned byte or half, representing the offset
@@ -1104,6 +1127,25 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     TmpInst.setOpcode(AArch64::B);
     TmpInst.addOperand(Dest);
     EmitToStreamer(*OutStreamer, TmpInst);
+    return;
+  }
+  case AArch64::SpeculationBarrierISBDSBEndBB: {
+    // Print DSB SYS + ISB
+    MCInst TmpInstDSB;
+    TmpInstDSB.setOpcode(AArch64::DSB);
+    TmpInstDSB.addOperand(MCOperand::createImm(0xf));
+    EmitToStreamer(*OutStreamer, TmpInstDSB);
+    MCInst TmpInstISB;
+    TmpInstISB.setOpcode(AArch64::ISB);
+    TmpInstISB.addOperand(MCOperand::createImm(0xf));
+    EmitToStreamer(*OutStreamer, TmpInstISB);
+    return;
+  }
+  case AArch64::SpeculationBarrierSBEndBB: {
+    // Print SB
+    MCInst TmpInstSB;
+    TmpInstSB.setOpcode(AArch64::SB);
+    EmitToStreamer(*OutStreamer, TmpInstSB);
     return;
   }
   case AArch64::TLSDESC_CALLSEQ: {

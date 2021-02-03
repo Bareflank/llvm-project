@@ -25,7 +25,6 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Metadata.h"
@@ -37,6 +36,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
+#include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 #include <algorithm>
 
@@ -848,7 +848,7 @@ bool llvm::UnrollRuntimeLoopRemainder(
     // dominator of the exit blocks.
     for (auto *BB : L->blocks()) {
       auto *DomNodeBB = DT->getNode(BB);
-      for (auto *DomChild : DomNodeBB->getChildren()) {
+      for (auto *DomChild : DomNodeBB->children()) {
         auto *DomChildBB = DomChild->getBlock();
         if (!L->contains(LI->getLoopFor(DomChildBB)))
           ChildrenToUpdate.push_back(DomChildBB);

@@ -28,8 +28,8 @@ namespace lldb_vscode {
 VSCode g_vsc;
 
 VSCode::VSCode()
-    : launch_info(nullptr), variables(), broadcaster("lldb-vscode"),
-      num_regs(0), num_locals(0), num_globals(0), log(),
+    : variables(), broadcaster("lldb-vscode"), num_regs(0), num_locals(0),
+      num_globals(0), log(),
       exception_breakpoints(
           {{"cpp_catch", "C++ Catch", lldb::eLanguageTypeC_plus_plus},
            {"cpp_throw", "C++ Throw", lldb::eLanguageTypeC_plus_plus},
@@ -38,7 +38,7 @@ VSCode::VSCode()
            {"swift_catch", "Swift Catch", lldb::eLanguageTypeSwift},
            {"swift_throw", "Swift Throw", lldb::eLanguageTypeSwift}}),
       focus_tid(LLDB_INVALID_THREAD_ID), sent_terminated_event(false),
-      stop_at_entry(false) {
+      stop_at_entry(false), is_attach(false) {
   const char *log_file_path = getenv("LLDBVSCODE_LOG");
 #if defined(_WIN32)
 // Windows opens stdout and stdin in text mode which converts \n to 13,10
@@ -309,6 +309,10 @@ void VSCode::RunExitCommands() {
   RunLLDBCommands("Running exitCommands:", exit_commands);
 }
 
+void VSCode::RunTerminateCommands() {
+  RunLLDBCommands("Running terminateCommands:", terminate_commands);
+}
+
 lldb::SBTarget VSCode::CreateTargetFromArguments(
     const llvm::json::Object &arguments,
     lldb::SBError &error) {
@@ -354,6 +358,11 @@ void VSCode::SetTarget(const lldb::SBTarget target) {
         lldb::SBTarget::eBroadcastBitBreakpointChanged);
     listener.StartListeningForEvents(this->broadcaster,
                                      eBroadcastBitStopEventThread);
+    listener.StartListeningForEvents(
+      this->target.GetBroadcaster(),
+      lldb::SBTarget::eBroadcastBitModulesLoaded |
+          lldb::SBTarget::eBroadcastBitModulesUnloaded |
+          lldb::SBTarget::eBroadcastBitSymbolsLoaded);                                
   }
 }
 

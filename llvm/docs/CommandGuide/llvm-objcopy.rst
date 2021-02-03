@@ -417,7 +417,8 @@ them.
 
  Write the output as the specified format. See `SUPPORTED FORMATS`_ for a list
  of valid ``<format>`` values. If unspecified, the output format is assumed to
- be the same as the input file's format.
+ be the same as the value specified for :option:`--input-target` or the input
+ file's format if that option is also unspecified.
 
 .. option:: --prefix-alloc-sections <prefix>
 
@@ -545,7 +546,7 @@ Otherwise, it exits with code 0.
 BUGS
 ----
 
-To report bugs, please visit <http://llvm.org/bugs/>.
+To report bugs, please visit <https://bugs.llvm.org/>.
 
 There is a known issue with :option:`--input-target` and :option:`--target`
 causing only ``binary`` and ``ihex`` formats to have any effect. Other values

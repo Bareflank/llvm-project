@@ -301,11 +301,10 @@ public:
   LocateExecutableScriptingResources(Target *target, Module &module,
                                      Stream *feedback_stream);
 
-  virtual Status GetSharedModule(const ModuleSpec &module_spec,
-                                 Process *process, lldb::ModuleSP &module_sp,
-                                 const FileSpecList *module_search_paths_ptr,
-                                 lldb::ModuleSP *old_module_sp_ptr,
-                                 bool *did_create_ptr);
+  virtual Status GetSharedModule(
+      const ModuleSpec &module_spec, Process *process,
+      lldb::ModuleSP &module_sp, const FileSpecList *module_search_paths_ptr,
+      llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules, bool *did_create_ptr);
 
   virtual bool GetModuleSpec(const FileSpec &module_file_spec,
                              const ArchSpec &arch, ModuleSpec &module_spec);
@@ -372,9 +371,13 @@ public:
 
   virtual lldb::ProcessSP ConnectProcess(llvm::StringRef connect_url,
                                          llvm::StringRef plugin_name,
-                                         lldb_private::Debugger &debugger,
-                                         lldb_private::Target *target,
-                                         lldb_private::Status &error);
+                                         Debugger &debugger, Target *target,
+                                         Status &error);
+
+  virtual lldb::ProcessSP
+  ConnectProcessSynchronous(llvm::StringRef connect_url,
+                            llvm::StringRef plugin_name, Debugger &debugger,
+                            Stream &stream, Target *target, Status &error);
 
   /// Attach to an existing process using a process ID.
   ///
@@ -827,18 +830,18 @@ public:
   virtual size_t ConnectToWaitingProcesses(lldb_private::Debugger &debugger,
                                            lldb_private::Status &error);
 
-  /// Gather all of crash informations into a structured data dictionnary.
+  /// Gather all of crash informations into a structured data dictionary.
   ///
   /// If the platform have a crashed process with crash information entries,
-  /// gather all the entries into an structured data dictionnary or return a
-  /// nullptr. This dictionnary is generic and extensible, as it contains an
+  /// gather all the entries into an structured data dictionary or return a
+  /// nullptr. This dictionary is generic and extensible, as it contains an
   /// array for each different type of crash information.
   ///
   /// \param[in] process
   ///     The crashed process.
   ///
   /// \return
-  ///     A structured data dictionnary containing at each entry, the crash
+  ///     A structured data dictionary containing at each entry, the crash
   ///     information type as the entry key and the matching  an array as the
   ///     entry value. \b nullptr if not implemented or  if the process has no
   ///     crash information entry. \b error if an error occured.
@@ -848,6 +851,12 @@ public:
   }
 
 protected:
+  /// Private implementation of connecting to a process. If the stream is set
+  /// we connect synchronously.
+  lldb::ProcessSP DoConnectProcess(llvm::StringRef connect_url,
+                                   llvm::StringRef plugin_name,
+                                   Debugger &debugger, Stream *stream,
+                                   Target *target, Status &error);
   bool m_is_host;
   // Set to true when we are able to actually set the OS version while being
   // connected. For remote platforms, we might set the version ahead of time
@@ -928,7 +937,8 @@ private:
 
   FileSpec GetModuleCacheRoot();
 
-  DISALLOW_COPY_AND_ASSIGN(Platform);
+  Platform(const Platform &) = delete;
+  const Platform &operator=(const Platform &) = delete;
 };
 
 class PlatformList {
@@ -995,7 +1005,8 @@ protected:
   lldb::PlatformSP m_selected_platform_sp;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(PlatformList);
+  PlatformList(const PlatformList &) = delete;
+  const PlatformList &operator=(const PlatformList &) = delete;
 };
 
 class OptionGroupPlatformRSync : public lldb_private::OptionGroup {
@@ -1020,7 +1031,9 @@ public:
   bool m_ignores_remote_hostname;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(OptionGroupPlatformRSync);
+  OptionGroupPlatformRSync(const OptionGroupPlatformRSync &) = delete;
+  const OptionGroupPlatformRSync &
+  operator=(const OptionGroupPlatformRSync &) = delete;
 };
 
 class OptionGroupPlatformSSH : public lldb_private::OptionGroup {
@@ -1043,7 +1056,9 @@ public:
   std::string m_ssh_opts;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(OptionGroupPlatformSSH);
+  OptionGroupPlatformSSH(const OptionGroupPlatformSSH &) = delete;
+  const OptionGroupPlatformSSH &
+  operator=(const OptionGroupPlatformSSH &) = delete;
 };
 
 class OptionGroupPlatformCaching : public lldb_private::OptionGroup {
@@ -1065,7 +1080,9 @@ public:
   std::string m_cache_dir;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(OptionGroupPlatformCaching);
+  OptionGroupPlatformCaching(const OptionGroupPlatformCaching &) = delete;
+  const OptionGroupPlatformCaching &
+  operator=(const OptionGroupPlatformCaching &) = delete;
 };
 
 } // namespace lldb_private

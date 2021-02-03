@@ -1,4 +1,4 @@
-//===--------- Implementation of the base class for libc unittests --------===//
+//===-- Implementation of the base class for libc unittests ---------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -261,7 +261,7 @@ bool Test::testProcessKilled(RunContext &Ctx, testutils::FunctionCaller *Func,
   if (Result.timedOut()) {
     Ctx.markFail();
     llvm::outs() << File << ":" << Line << ": FAILURE\n"
-                 << "Process timed out after " << 500 << " miliseconds.\n";
+                 << "Process timed out after " << 500 << " milliseconds.\n";
     return false;
   }
 
@@ -305,7 +305,7 @@ bool Test::testProcessExits(RunContext &Ctx, testutils::FunctionCaller *Func,
   if (Result.timedOut()) {
     Ctx.markFail();
     llvm::outs() << File << ":" << Line << ": FAILURE\n"
-                 << "Process timed out after " << 500 << " miliseconds.\n";
+                 << "Process timed out after " << 500 << " milliseconds.\n";
     return false;
   }
 

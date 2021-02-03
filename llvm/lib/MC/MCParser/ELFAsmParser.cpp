@@ -637,13 +637,20 @@ EndStmt:
   MCSectionELF *Section = getContext().getELFSection(
       SectionName, Type, Flags, Size, GroupName, UniqueID, LinkedToSym);
   getStreamer().SwitchSection(Section, Subsection);
-  if (Section->getType() != Type)
+  // x86-64 psABI names SHT_X86_64_UNWIND as the canonical type for .eh_frame,
+  // but GNU as emits SHT_PROGBITS .eh_frame for .cfi_* directives. Don't error
+  // for SHT_PROGBITS .eh_frame
+  if (Section->getType() != Type &&
+      !(SectionName == ".eh_frame" && Type == ELF::SHT_PROGBITS))
     Error(loc, "changed section type for " + SectionName + ", expected: 0x" +
                    utohexstr(Section->getType()));
-  if (Section->getFlags() != Flags)
+  // Check that flags are used consistently. However, the GNU assembler permits
+  // to leave out in subsequent uses of the same sections; for compatibility,
+  // do likewise.
+  if ((Flags || Size || !TypeName.empty()) && Section->getFlags() != Flags)
     Error(loc, "changed section flags for " + SectionName + ", expected: 0x" +
                    utohexstr(Section->getFlags()));
-  if (Section->getEntrySize() != Size)
+  if ((Flags || Size || !TypeName.empty()) && Section->getEntrySize() != Size)
     Error(loc, "changed section entsize for " + SectionName +
                    ", expected: " + Twine(Section->getEntrySize()));
 
@@ -858,45 +865,8 @@ bool ELFAsmParser::ParseDirectiveSubsection(StringRef, SMLoc) {
   return false;
 }
 
-/// ParseDirectiveCGProfile
-///  ::= .cg_profile identifier, identifier, <number>
-bool ELFAsmParser::ParseDirectiveCGProfile(StringRef, SMLoc) {
-  StringRef From;
-  SMLoc FromLoc = getLexer().getLoc();
-  if (getParser().parseIdentifier(From))
-    return TokError("expected identifier in directive");
-
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("expected a comma");
-  Lex();
-
-  StringRef To;
-  SMLoc ToLoc = getLexer().getLoc();
-  if (getParser().parseIdentifier(To))
-    return TokError("expected identifier in directive");
-
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("expected a comma");
-  Lex();
-
-  int64_t Count;
-  if (getParser().parseIntToken(
-          Count, "expected integer count in '.cg_profile' directive"))
-    return true;
-
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in directive");
-
-  MCSymbol *FromSym = getContext().getOrCreateSymbol(From);
-  MCSymbol *ToSym = getContext().getOrCreateSymbol(To);
-
-  getStreamer().emitCGProfileEntry(
-      MCSymbolRefExpr::create(FromSym, MCSymbolRefExpr::VK_None, getContext(),
-                              FromLoc),
-      MCSymbolRefExpr::create(ToSym, MCSymbolRefExpr::VK_None, getContext(),
-                              ToLoc),
-      Count);
-  return false;
+bool ELFAsmParser::ParseDirectiveCGProfile(StringRef S, SMLoc Loc) {
+  return MCAsmParserExtension::ParseDirectiveCGProfile(S, Loc);
 }
 
 namespace llvm {

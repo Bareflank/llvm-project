@@ -841,7 +841,7 @@ int GDBRemoteCommunicationClient::SendEnvironmentPacket(
     bool send_hex_encoding = false;
     for (const char *p = name_equal_value; *p != '\0' && !send_hex_encoding;
          ++p) {
-      if (isprint(*p)) {
+      if (llvm::isPrint(*p)) {
         switch (*p) {
         case '$':
         case '#':
@@ -2797,12 +2797,10 @@ size_t GDBRemoteCommunicationClient::GetCurrentThreadIDs(
       thread_ids.push_back(1);
     }
   } else {
-#if !defined(LLDB_CONFIGURATION_DEBUG)
     Log *log(ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
                                                            GDBR_LOG_PACKETS));
-    LLDB_LOGF(log, "error: failed to get packet sequence mutex, not sending "
-                   "packet 'qfThreadInfo'");
-#endif
+    LLDB_LOG(log, "error: failed to get packet sequence mutex, not sending "
+                  "packet 'qfThreadInfo'");
     sequence_mutex_unavailable = true;
   }
   return thread_ids.size();
@@ -3625,7 +3623,7 @@ bool GDBRemoteCommunicationClient::GetModuleInfo(
       StringExtractor extractor(value);
       std::string uuid;
       extractor.GetHexByteString(uuid);
-      module_spec.GetUUID().SetFromStringRef(uuid, uuid.size() / 2);
+      module_spec.GetUUID().SetFromStringRef(uuid);
     } else if (name == "triple") {
       StringExtractor extractor(value);
       std::string triple;
@@ -3661,8 +3659,7 @@ ParseModuleSpec(StructuredData::Dictionary *dict) {
 
   if (!dict->GetValueForKeyAsString("uuid", string))
     return llvm::None;
-  if (result.GetUUID().SetFromStringRef(string, string.size() / 2) !=
-      string.size())
+  if (!result.GetUUID().SetFromStringRef(string))
     return llvm::None;
 
   if (!dict->GetValueForKeyAsInteger("file_offset", integer))

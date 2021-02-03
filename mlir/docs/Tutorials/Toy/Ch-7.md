@@ -64,7 +64,7 @@ representation.
 
 Types in MLIR rely on having a unique `kind` value to ensure that casting checks
 remain extremely efficient
-([rationale](../../Rationale.md#reserving-dialect-type-kinds)). For `toy`, this
+([rationale](../../Rationale/Rationale.md#reserving-dialect-type-kinds)). For `toy`, this
 means we need to explicitly reserve a static range of type `kind` values in the
 symbol registry file
 [DialectSymbolRegistry](https://github.com/llvm/llvm-project/blob/master/mlir/include/mlir/IR/DialectSymbolRegistry.def).
@@ -287,8 +287,7 @@ mlir::Type ToyDialect::parseType(mlir::DialectAsmParser &parser) const {
       return nullptr;
 
     // Check that the type is either a TensorType or another StructType.
-    if (!elementType.isa<mlir::TensorType>() &&
-        !elementType.isa<StructType>()) {
+    if (!elementType.isa<mlir::TensorType, StructType>()) {
       parser.emitError(typeLoc, "element type for a struct must either "
                                 "be a TensorType or a StructType, got: ")
           << elementType;
@@ -319,7 +318,7 @@ void ToyDialect::printType(mlir::Type type,
 
   // Print the struct type according to the parser format.
   printer << "struct<";
-  mlir::interleaveComma(structType.getElementTypes(), printer);
+  llvm::interleaveComma(structType.getElementTypes(), printer);
   printer << '>';
 }
 ```
@@ -541,4 +540,4 @@ module {
 You can build `toyc-ch7` and try yourself: `toyc-ch7
 test/Examples/Toy/Ch7/struct-codegen.toy -emit=mlir`. More details on defining
 custom types can be found in
-[DefiningAttributesAndTypes](../../DefiningAttributesAndTypes.md).
+[DefiningAttributesAndTypes](../DefiningAttributesAndTypes.md).

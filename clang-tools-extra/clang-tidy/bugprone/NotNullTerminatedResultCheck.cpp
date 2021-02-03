@@ -12,6 +12,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/PPCallbacks.h"
+#include "clang/Lex/Preprocessor.h"
 
 using namespace clang::ast_matchers;
 
@@ -499,7 +500,7 @@ static void insertNullTerminatorExpr(StringRef Name,
 NotNullTerminatedResultCheck::NotNullTerminatedResultCheck(
     StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
-      WantToUseSafeFunctions(Options.get("WantToUseSafeFunctions", 1)) {}
+      WantToUseSafeFunctions(Options.get("WantToUseSafeFunctions", true)) {}
 
 void NotNullTerminatedResultCheck::storeOptions(
     ClangTidyOptions::OptionMap &Opts) {

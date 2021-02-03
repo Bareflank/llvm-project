@@ -40,9 +40,8 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::ELF;
-
-namespace lld {
-namespace elf {
+using namespace lld;
+using namespace lld::elf;
 
 namespace {
 
@@ -276,6 +275,20 @@ class PPC64PltCallStub final : public Thunk {
 public:
   PPC64PltCallStub(Symbol &dest) : Thunk(dest, 0) {}
   uint32_t size() override { return 20; }
+  void writeTo(uint8_t *buf) override;
+  void addSymbols(ThunkSection &isec) override;
+};
+
+// PPC64 R2 Save Stub
+// When the caller requires a valid R2 TOC pointer but the callee does not
+// require a TOC pointer and the callee cannot guarantee that it doesn't
+// clobber R2 then we need to save R2. This stub:
+// 1) Saves the TOC pointer to the stack.
+// 2) Tail calls the callee.
+class PPC64R2SaveStub final : public Thunk {
+public:
+  PPC64R2SaveStub(Symbol &dest) : Thunk(dest, 0) {}
+  uint32_t size() override { return 8; }
   void writeTo(uint8_t *buf) override;
   void addSymbols(ThunkSection &isec) override;
 };
@@ -714,8 +727,8 @@ InputSection *MicroMipsR6Thunk::getTargetInputSection() const {
   return dyn_cast<InputSection>(dr.section);
 }
 
-void writePPC32PltCallStub(uint8_t *buf, uint64_t gotPltVA,
-                           const InputFile *file, int64_t addend) {
+void elf::writePPC32PltCallStub(uint8_t *buf, uint64_t gotPltVA,
+                                const InputFile *file, int64_t addend) {
   if (!config->isPic) {
     write32(buf + 0, 0x3d600000 | (gotPltVA + 0x8000) >> 16); // lis r11,ha
     write32(buf + 4, 0x816b0000 | (uint16_t)gotPltVA);        // lwz r11,l(r11)
@@ -799,7 +812,7 @@ void PPC32LongThunk::writeTo(uint8_t *buf) {
   write32(buf + 4, 0x4e800420);              // bctr
 }
 
-void writePPC64LoadAndBranch(uint8_t *buf, int64_t offset) {
+void elf::writePPC64LoadAndBranch(uint8_t *buf, int64_t offset) {
   uint16_t offHa = (offset + 0x8000) >> 16;
   uint16_t offLo = offset & 0xffff;
 
@@ -823,6 +836,21 @@ void PPC64PltCallStub::addSymbols(ThunkSection &isec) {
   s->file = destination.file;
 }
 
+void PPC64R2SaveStub::writeTo(uint8_t *buf) {
+  int64_t offset = destination.getVA() - (getThunkTargetSym()->getVA() + 4);
+  // The branch offset needs to fit in 26 bits.
+  if (!isInt<26>(offset))
+    fatal("R2 save stub branch offset is too large: " + Twine(offset));
+  write32(buf + 0, 0xf8410018);                         // std  r2,24(r1)
+  write32(buf + 4, 0x48000000 | (offset & 0x03fffffc)); // b    <offset>
+}
+
+void PPC64R2SaveStub::addSymbols(ThunkSection &isec) {
+  Defined *s = addSymbol(saver.save("__toc_save_" + destination.getName()),
+                         STT_FUNC, 0, isec);
+  s->needsTocRestore = true;
+}
+
 void PPC64LongBranchThunk::writeTo(uint8_t *buf) {
   int64_t offset = in.ppc64LongBranchTarget->getEntryVA(&destination, addend) -
                    getPPC64TocBase();
@@ -839,7 +867,8 @@ Thunk::Thunk(Symbol &d, int64_t a) : destination(d), addend(a), offset(0) {}
 Thunk::~Thunk() = default;
 
 static Thunk *addThunkAArch64(RelType type, Symbol &s, int64_t a) {
-  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26)
+  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26 &&
+      type != R_AARCH64_PLT32)
     fatal("unrecognized relocation type");
   if (config->picThunk)
     return make<AArch64ADRPThunk>(s, a);
@@ -945,9 +974,15 @@ static Thunk *addThunkPPC32(const InputSection &isec, const Relocation &rel,
 }
 
 static Thunk *addThunkPPC64(RelType type, Symbol &s, int64_t a) {
-  assert(type == R_PPC64_REL24 && "unexpected relocation type for thunk");
+  assert((type == R_PPC64_REL14 || type == R_PPC64_REL24) &&
+         "unexpected relocation type for thunk");
   if (s.isInPlt())
     return make<PPC64PltCallStub>(s);
+
+  // This check looks at the st_other bits of the callee. If the value is 1
+  // then the callee clobbers the TOC and we need an R2 save stub.
+  if ((s.stOther >> 5) == 1)
+    return make<PPC64R2SaveStub>(s);
 
   if (config->picThunk)
     return make<PPC64PILongBranchThunk>(s, a);
@@ -955,7 +990,7 @@ static Thunk *addThunkPPC64(RelType type, Symbol &s, int64_t a) {
   return make<PPC64PDLongBranchThunk>(s, a);
 }
 
-Thunk *addThunk(const InputSection &isec, Relocation &rel) {
+Thunk *elf::addThunk(const InputSection &isec, Relocation &rel) {
   Symbol &s = *rel.sym;
   int64_t a = rel.addend;
 
@@ -976,6 +1011,3 @@ Thunk *addThunk(const InputSection &isec, Relocation &rel) {
 
   llvm_unreachable("add Thunk only supported for ARM, Mips and PowerPC");
 }
-
-} // end namespace elf
-} // end namespace lld

@@ -12,7 +12,6 @@
 #include "mlir/IR/AffineMap.h"
 #include "mlir/IR/IntegerSet.h"
 #include "mlir/Support/MathExtras.h"
-#include "mlir/Support/STLExtras.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace mlir;
@@ -613,7 +612,7 @@ AffineExpr AffineExpr::compose(AffineMap map) const {
                                              map.getResults().end());
   return replaceDimsAndSymbols(dimReplacements, {});
 }
-raw_ostream &mlir::operator<<(raw_ostream &os, AffineExpr &expr) {
+raw_ostream &mlir::operator<<(raw_ostream &os, AffineExpr expr) {
   expr.print(os);
   return os;
 }
@@ -704,7 +703,7 @@ void SimpleAffineExprFlattener::visitModExpr(AffineBinaryOpExpr expr) {
   auto rhsConst = operandExprStack.back()[getConstantIndex()];
   operandExprStack.pop_back();
   auto &lhs = operandExprStack.back();
-  // TODO(bondhugula): handle modulo by zero case when this issue is fixed
+  // TODO: handle modulo by zero case when this issue is fixed
   // at the other places in the IR.
   assert(rhsConst > 0 && "RHS constant has to be positive");
 
@@ -792,7 +791,7 @@ void SimpleAffineExprFlattener::visitDivExpr(AffineBinaryOpExpr expr,
 
   // This is a pure affine expr; the RHS is a positive constant.
   int64_t rhsConst = operandExprStack.back()[getConstantIndex()];
-  // TODO(bondhugula): handle division by zero at the same time the issue is
+  // TODO: handle division by zero at the same time the issue is
   // fixed at other places.
   assert(rhsConst > 0 && "RHS constant has to be positive");
   operandExprStack.pop_back();
@@ -871,7 +870,7 @@ int SimpleAffineExprFlattener::findLocalId(AffineExpr localExpr) {
 /// Simplify the affine expression by flattening it and reconstructing it.
 AffineExpr mlir::simplifyAffineExpr(AffineExpr expr, unsigned numDims,
                                     unsigned numSymbols) {
-  // TODO(bondhugula): only pure affine for now. The simplification here can
+  // TODO: only pure affine for now. The simplification here can
   // be extended to semi-affine maps in the future.
   if (!expr.isPureAffine())
     return expr;

@@ -8,13 +8,15 @@ add_mlir_dialect_library(MLIRStandardOps
 
   DEPENDS
   MLIRStandardOpsIncGen
-  )
-target_link_libraries(MLIRStandardOps
-  PUBLIC
+
+  LINK_LIBS PUBLIC
   MLIRCallInterfaces
   MLIRControlFlowInterfaces
   MLIREDSC
   MLIRIR
-  MLIRSideEffects
-  LLVMSupport
+  MLIRSideEffectInterfaces
+  MLIRVectorUnrollInterface
+  MLIRViewLikeInterface
   )
+
+add_subdirectory(Transforms)
