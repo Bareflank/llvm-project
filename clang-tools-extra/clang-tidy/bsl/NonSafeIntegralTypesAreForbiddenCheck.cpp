@@ -42,6 +42,9 @@ void NonSafeIntegralTypesAreForbiddenCheck::check(const MatchFinder::MatchResult
       }
     }
 
+    if (!VD->getBeginLoc().isValid())
+      return;
+
     FullSourceLoc FullLocation = Result.Context->getFullLoc(VD->getBeginLoc());
     if (auto const File = FullLocation.getFileEntry()) {
       auto const filename{File->tryGetRealPathName()};

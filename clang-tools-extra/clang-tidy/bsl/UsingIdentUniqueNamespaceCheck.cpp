@@ -83,6 +83,14 @@ void UsingIdentUniqueNamespaceCheck::check(const MatchFinder::MatchResult &Resul
   if (name.empty() || name[0] == '_')
     return;
 
+  const size_t is_nullptr = name.find("nullptr_t");
+  if (std::string::npos != is_nullptr)
+    return;
+
+  const size_t is_max_align = name.find("max_align_t");
+  if (std::string::npos != is_max_align)
+    return;
+
   auto iter{m_ids.find(name)};
   if (iter != m_ids.end()) {
     auto &recordList{iter->second};

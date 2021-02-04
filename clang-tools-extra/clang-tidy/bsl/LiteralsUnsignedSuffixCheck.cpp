@@ -27,6 +27,9 @@ void LiteralsUnsignedSuffixCheck::registerMatchers(MatchFinder *Finder) {
 
 void LiteralsUnsignedSuffixCheck::check(const MatchFinder::MatchResult &Result) {
   auto Lit = Result.Nodes.getNodeAs<IntegerLiteral>("lit");
+  if (!Lit)
+    return;
+
   auto Loc = Lit->getBeginLoc();
   auto Mgr = Result.SourceManager;
   auto Ctx = Result.Context;
@@ -40,6 +43,9 @@ void LiteralsUnsignedSuffixCheck::check(const MatchFinder::MatchResult &Result) 
 
   Token Tok;
   if (Lexer::getRawToken(Loc, Tok, *Mgr, Ctx->getLangOpts(), false))
+    return;
+
+  if (!Tok.isLiteral())
     return;
 
   auto Buf = Tok.getLiteralData();

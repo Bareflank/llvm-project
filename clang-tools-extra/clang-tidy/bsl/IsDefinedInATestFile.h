@@ -22,6 +22,9 @@ namespace bsl {
 inline bool isDefinedInATestFile(
   ASTContext const * const Context, SourceLocation const Loc)
 {
+  if (!Loc.isValid())
+    return false;
+
   FullSourceLoc FullLocation = Context->getFullLoc(Loc);
 
   auto const File = FullLocation.getFileEntry();

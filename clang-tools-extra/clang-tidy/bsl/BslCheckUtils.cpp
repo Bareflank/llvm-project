@@ -26,6 +26,9 @@ StringRef getRawTokenStr(SourceLocation Loc,
   if (Lexer::getRawToken(Loc, Tok, *Mgr, Ctx->getLangOpts(), false))
     return StringRef();
 
+  if (!Tok.isLiteral())
+    return StringRef();
+
   auto Buf = Tok.getLiteralData();
   if (!Buf)
     return StringRef();
