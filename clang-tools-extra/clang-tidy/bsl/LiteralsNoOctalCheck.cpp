@@ -27,6 +27,9 @@ static bool isOctalInteger(SourceLocation Loc,
   if (Lexer::getRawToken(Loc, Tok, *Mgr, Ctx->getLangOpts(), false))
     return false;
 
+  if (!Tok.isLiteral())
+    return false;
+
   auto Buf = Tok.getLiteralData();
   if (!Buf)
     return false;
@@ -47,6 +50,9 @@ static bool containsOctalEscape(SourceLocation Loc,
 
   Token Tok;
   if (Lexer::getRawToken(Loc, Tok, *Mgr, Ctx->getLangOpts(), false))
+    return false;
+
+  if (!Tok.isLiteral())
     return false;
 
   auto Buf = Tok.getLiteralData();

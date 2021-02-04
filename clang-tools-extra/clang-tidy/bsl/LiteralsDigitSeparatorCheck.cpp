@@ -32,9 +32,14 @@ void LiteralsDigitSeparatorCheck::check(const MatchFinder::MatchResult &Result) 
     return;
 
   const auto Lit = Result.Nodes.getNodeAs<IntegerLiteral>("lit");
-  const auto Loc = Lit->getBeginLoc();
-  const auto Str = getRawTokenStr(Loc, Result);
+  if (!Lit)
+    return;
 
+  const auto Loc = Lit->getBeginLoc();
+  if (Loc.isInvalid() || Loc.isMacroID())
+    return;
+
+  const auto Str = getRawTokenStr(Loc, Result);
   if (!Str.contains("'"))
     return;
 

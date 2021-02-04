@@ -29,6 +29,10 @@ void UserDefinedTypeNamesMatchHeaderNameCheck::registerMatchers(MatchFinder *Fin
 
 void UserDefinedTypeNamesMatchHeaderNameCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
+
+  if (!D->getBeginLoc().isValid())
+    return;
+
   FullSourceLoc FullLocation = Result.Context->getFullLoc(D->getBeginLoc());
 
   auto const File = FullLocation.getFileEntry();

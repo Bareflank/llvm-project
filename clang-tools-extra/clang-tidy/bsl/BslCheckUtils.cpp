@@ -7,9 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "BslCheckUtils.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/Lex/Lexer.h"
 
 using namespace clang::ast_matchers;
 
@@ -27,6 +24,9 @@ StringRef getRawTokenStr(SourceLocation Loc,
 
   Token Tok;
   if (Lexer::getRawToken(Loc, Tok, *Mgr, Ctx->getLangOpts(), false))
+    return StringRef();
+
+  if (!Tok.isLiteral())
     return StringRef();
 
   auto Buf = Tok.getLiteralData();

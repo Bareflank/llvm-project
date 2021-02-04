@@ -10,6 +10,8 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_BSL_IDENTIFIERTYPOGRAPHICALLYUNAMBIGUOUSCHECK_H
 
 #include "../ClangTidyCheck.h"
+#include <unordered_map>
+#include <list>
 
 namespace clang {
 namespace tidy {
