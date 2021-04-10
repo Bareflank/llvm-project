@@ -27,7 +27,7 @@ void TemplateGenericParamCheck::registerMatchers(MatchFinder *Finder) {
   auto ForwardingRefParm =
       anyOf(parmVarDecl(
           hasType(templateTypeParmType(hasDeclaration(
-                               templateTypeParmDecl().bind("type-parm-decl"))))) 
+                               templateTypeParmDecl().bind("type-parm-decl")))))
           .bind("parm-var"),
           parmVarDecl(
           hasType(qualType(references(templateTypeParmType(hasDeclaration(
@@ -91,7 +91,7 @@ void TemplateGenericParamCheck::check(const MatchFinder::MatchResult &Result) {
     }
     if (!CopyAssignOp->getParent()->hasUserDeclaredCopyAssignment()) {
       diag(CopyAssignOp->getLocation(), "a copy assignment operator should be declared when there is a template assignment operator with a parameter that is a generic parameter.");
-    } 
+    }
   }
 }
 
