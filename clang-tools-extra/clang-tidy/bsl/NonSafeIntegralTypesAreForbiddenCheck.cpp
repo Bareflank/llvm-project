@@ -32,6 +32,13 @@ void NonSafeIntegralTypesAreForbiddenCheck::check(const MatchFinder::MatchResult
     if (name == "char")
       return;
 
+    auto const qualified_name{VD->getType().getUnqualifiedType().getAsString()};
+    if (qualified_name == "bsl::exit_code")
+      return;
+
+    if (qualified_name == "syscall::bf_status_t")
+      return;
+
     if (auto const *parent = VD->getParentFunctionOrMethod()) {
       if (auto const *FD = dyn_cast<FunctionDecl>(parent)) {
         if (FD->isExternC())
@@ -84,7 +91,7 @@ void NonSafeIntegralTypesAreForbiddenCheck::check(const MatchFinder::MatchResult
     }
 
     diag(VD->getBeginLoc(), "integral types like int, std::int32_t and bsl::int32 are forbidden. "
-                            "Use bsl::safe_integral instead of %0") << name;
+                            "Use bsl::safe_integral instead of %0") << qualified_name;
   }
 }
 
