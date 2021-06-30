@@ -48,7 +48,18 @@ void NameCaseCheck::registerMatchers(MatchFinder *Finder) {
 
 void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *ND = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  if (nullptr == ND) {
+    return;
+  }
+
   auto const name{ND->getNameAsString()};
+  if (name.empty()) {
+    return;
+  }
+
+  const auto Loc = ND->getLocation();
+  if (Loc.isInvalid())
+    return;
 
   if (isa<FunctionTemplateDecl>(ND) ||
       isa<CXXConstructorDecl>(ND) ||
@@ -62,7 +73,7 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
       isa<NonTypeTemplateParmDecl>(ND) ||
       isa<TemplateTemplateParmDecl>(ND)) {
     if (!isUpperCase(name)) {
-      diag(ND->getLocation(), "name of template variable is not in upper case");
+      diag(Loc, "name of template variable is not in upper case");
     }
 
     return;
@@ -72,7 +83,7 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
     if (VD->hasGlobalStorage() && VD->isConstexpr()) {
       if (!VD->isStaticLocal() && !VD->isStaticDataMember()) {
         if (!isUpperCase(name)) {
-          diag(ND->getLocation(), "name of global constexpr is not in upper case");
+          diag(Loc, "name of global constexpr is not in upper case");
         }
 
         return;
@@ -81,7 +92,7 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (!isLowerCase(name)) {
-    diag(ND->getLocation(), "name of variable is not in lower case");
+    diag(Loc, "name of variable is not in lower case");
   }
 }
 

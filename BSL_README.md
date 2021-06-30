@@ -24,6 +24,9 @@ mkdir llvm-project-build && cd llvm-project-build
 cmake ../llvm-project/llvm -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld" -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_DOCS=OFF -DCMAKE_INSTALL_PREFIX=/usr/lib/llvm-bareflank -DLLVM_INSTALL_TOOLCHAIN_ONLY=ON -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON
 make -j
 sudo make install
+sudo rm -R /usr/lib/llvm-bareflank
 cp -R /usr/lib/llvm-bareflank .
 tar -czvf llvm-bareflank.tar.gz llvm-bareflank
+cp llvm-bareflank.tar.gz ../bsl/utils/linux/llvm-bareflank.tar.gz
+cp llvm-bareflank.tar.gz ../hypervisor/utils/linux/llvm-bareflank.tar.gz
 ```
