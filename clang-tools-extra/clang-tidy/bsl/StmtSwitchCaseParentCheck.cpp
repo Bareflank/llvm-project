@@ -25,8 +25,8 @@ void StmtSwitchCaseParentCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void StmtSwitchCaseParentCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Case = Result.Nodes.getNodeAs<SwitchCase>("switch-case");
-  const auto Loc = Case->getBeginLoc();
+  auto const *Case = Result.Nodes.getNodeAs<SwitchCase>("switch-case");
+  auto const Loc = Case->getBeginLoc();
   if (Loc.isInvalid())
     return;
 

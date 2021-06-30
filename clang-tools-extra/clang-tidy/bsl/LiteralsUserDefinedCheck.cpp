@@ -21,9 +21,32 @@ void LiteralsUserDefinedCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void LiteralsUserDefinedCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *UDL = Result.Nodes.getNodeAs<UserDefinedLiteral>("literal");
+  auto const *UDL = Result.Nodes.getNodeAs<UserDefinedLiteral>("literal");
 
-  const auto Loc = UDL->getBeginLoc();
+  if (nullptr == UDL) {
+    return;
+  }
+
+  auto const suffix = UDL->getUDSuffix();
+  if (nullptr == suffix) {
+    return;
+  }
+
+  if (suffix->getName() == "_u8" ||
+      suffix->getName() == "_u16" ||
+      suffix->getName() == "_u32" ||
+      suffix->getName() == "_u64" ||
+      suffix->getName() == "_umax" ||
+      suffix->getName() == "_i8" ||
+      suffix->getName() == "_i16" ||
+      suffix->getName() == "_i32" ||
+      suffix->getName() == "_i64" ||
+      suffix->getName() == "_imax")
+  {
+    return;
+  }
+
+  auto const Loc = UDL->getBeginLoc();
   if (Loc.isInvalid())
     return;
 

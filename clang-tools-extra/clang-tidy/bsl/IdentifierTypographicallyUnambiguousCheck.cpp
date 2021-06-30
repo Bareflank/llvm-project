@@ -269,7 +269,7 @@ void IdentifierTypographicallyUnambiguousCheck::registerMatchers(MatchFinder *Fi
 
 void IdentifierTypographicallyUnambiguousCheck::check(const MatchFinder::MatchResult &Result)
 {
-  const auto *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  auto const *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
 
   if (isa<NamespaceDecl>(D) ||
       isa<UsingDirectiveDecl>(D) ||

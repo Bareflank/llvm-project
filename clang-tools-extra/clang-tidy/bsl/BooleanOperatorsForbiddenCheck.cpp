@@ -21,8 +21,8 @@ void BooleanOperatorsForbiddenCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void BooleanOperatorsForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Op = Result.Nodes.getNodeAs<BinaryOperator>("op");
-  const auto Loc = Op->getOperatorLoc();
+  auto const *Op = Result.Nodes.getNodeAs<BinaryOperator>("op");
+  auto const Loc = Op->getOperatorLoc();
 
   if (Loc.isInvalid())
     return;

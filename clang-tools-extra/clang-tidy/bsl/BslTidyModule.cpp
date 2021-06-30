@@ -35,8 +35,10 @@
 #include "FunctionNoexceptCheck.h"
 #include "IdentifierTypographicallyUnambiguousCheck.h"
 #include "ImplicitConversionsForbiddenCheck.h"
+#include "IntegralLiteralsInConstexprCheck.h"
 #include "LambdaImplicitCaptureCheck.h"
 #include "LambdaParamListCheck.h"
+#include "LeftSideConstantsCheck.h"
 #include "LiteralsAsciiOnlyCheck.h"
 #include "LiteralsDigitSeparatorCheck.h"
 #include "LiteralsNoOctalCheck.h"
@@ -56,6 +58,7 @@
 #include "OpLogicalPostfixCheck.h"
 #include "OpMixedIncrementDecrementCheck.h"
 #include "OpRelationalReturnBoolCheck.h"
+#include "PassByReferenceCheck.h"
 #include "PureOverrideCheck.h"
 #include "SpecialMemberFunctionsCheck.h"
 #include "StmtForbiddenCheck.h"
@@ -65,14 +68,15 @@
 #include "StructDefCheck.h"
 #include "TemplateGenericParamCheck.h"
 #include "TernaryOperatorForbiddenCheck.h"
+#include "TypesFixedWidthIntsArithmeticCheckCheck.h"
 #include "TypesFixedWidthIntsCheck.h"
 #include "TypesNoWideCharCheck.h"
-#include "UnusedReturnValueCheck.h"
 #include "UserDefinedTypeNamesMatchHeaderNameCheck.h"
 #include "UsingDeclScopeCheck.h"
 #include "UsingIdentUniqueNamespaceCheck.h"
 #include "UsingNamespaceForbiddenCheck.h"
 #include "VarBracedInitCheck.h"
+#include "VerifyConstCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -130,13 +134,17 @@ public:
     CheckFactories.registerCheck<FunctionNoexceptCheck>(
         "bsl-function-noexcept");
     CheckFactories.registerCheck<IdentifierTypographicallyUnambiguousCheck>(
-        "bsl-identifier-typographically-unambiguous");    
+        "bsl-identifier-typographically-unambiguous");
     CheckFactories.registerCheck<ImplicitConversionsForbiddenCheck>(
         "bsl-implicit-conversions-forbidden");
+    CheckFactories.registerCheck<IntegralLiteralsInConstexprCheck>(
+        "bsl-integral-literals-in-constexpr");
     CheckFactories.registerCheck<LambdaImplicitCaptureCheck>(
         "bsl-lambda-implicit-capture");
     CheckFactories.registerCheck<LambdaParamListCheck>(
         "bsl-lambda-param-list");
+    CheckFactories.registerCheck<LeftSideConstantsCheck>(
+        "bsl-left-side-constants");
     CheckFactories.registerCheck<LiteralsDigitSeparatorCheck>(
         "bsl-literals-digit-separator");
     CheckFactories.registerCheck<LiteralsUserDefinedCheck>(
@@ -169,6 +177,8 @@ public:
         "bsl-op-mixed-increment-decrement");
     CheckFactories.registerCheck<OpRelationalReturnBoolCheck>(
         "bsl-op-relational-return-bool");
+    CheckFactories.registerCheck<PassByReferenceCheck>(
+        "bsl-pass-by-reference");
     CheckFactories.registerCheck<PureOverrideCheck>(
         "bsl-pure-override");
     CheckFactories.registerCheck<SpecialMemberFunctionsCheck>(
@@ -195,10 +205,10 @@ public:
         "bsl-literals-no-octal");
     CheckFactories.registerCheck<LiteralsUnsignedSuffixCheck>(
         "bsl-literals-unsigned-suffix");
+    CheckFactories.registerCheck<TypesFixedWidthIntsArithmeticCheckCheck>(
+        "bsl-types-fixed-width-ints-arithmetic-check");
     CheckFactories.registerCheck<TypesNoWideCharCheck>(
         "bsl-types-no-wide-char");
-    CheckFactories.registerCheck<UnusedReturnValueCheck>(
-        "bsl-unused-return-value");
     CheckFactories.registerCheck<UserDefinedTypeNamesMatchHeaderNameCheck>(
         "bsl-user-defined-type-names-match-header-name");
     CheckFactories.registerCheck<UsingDeclScopeCheck>(
@@ -209,6 +219,8 @@ public:
         "bsl-using-namespace-forbidden");
     CheckFactories.registerCheck<VarBracedInitCheck>(
         "bsl-var-braced-init");
+    CheckFactories.registerCheck<VerifyConstCheck>(
+        "bsl-verify-const");
   }
 };
 

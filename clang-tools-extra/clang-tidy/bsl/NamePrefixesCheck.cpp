@@ -30,30 +30,19 @@ void NamePrefixesCheck::registerMatchers(MatchFinder *Finder) {
   );
 }
 
-bool
-startsWith(std::string const &str, const char *prefix)
-{
-  if (str.size() < 2)
-    return false;
-
-  if (str[0] != prefix[0] || str[1] != prefix[1])
-    return false;
-
-  return true;
-}
-
 void NamePrefixesCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *DD = Result.Nodes.getNodeAs<DeclaratorDecl>("decl");
-  auto const name{DD->getNameAsString()};
+  auto const *DD = Result.Nodes.getNodeAs<DeclaratorDecl>("decl");
+  auto const str{DD->getNameAsString()};
+  StringRef const name{str};
 
-  if (const auto *VD = dyn_cast<VarDecl>(DD)) {
+  if (auto const *VD = dyn_cast<VarDecl>(DD)) {
     // Ignore constexpr variables
     if (VD->isConstexpr()) {
       return;
     }
 
     if (VD->isStaticLocal() || VD->isStaticDataMember()) {
-      if (!startsWith(name, "s_")) {
+      if (!name.startswith("s_")) {
         diag(VD->getLocation(), "static local/member variables must start with 's_'");
       }
 
@@ -61,7 +50,7 @@ void NamePrefixesCheck::check(const MatchFinder::MatchResult &Result) {
     }
 
     if (!VD->isLocalVarDeclOrParm()) {
-      if (!startsWith(name, "g_")) {
+      if (!name.startswith("g_")) {
         diag(VD->getLocation(), "global variables must start with 'g_'");
       }
 
@@ -69,15 +58,15 @@ void NamePrefixesCheck::check(const MatchFinder::MatchResult &Result) {
     }
   }
 
-  if (const auto *FD = dyn_cast<FieldDecl>(DD)) {
+  if (auto const *FD = dyn_cast<FieldDecl>(DD)) {
     // Ignore structs
-    if (const auto *CXXRD = dyn_cast<CXXRecordDecl>(FD->getParent())) {
+    if (auto const *CXXRD = dyn_cast<CXXRecordDecl>(FD->getParent())) {
       if (CXXRD->isStruct()) {
         return;
       }
     }
 
-    if (!startsWith(name, "m_")) {
+    if (!name.startswith("m_")) {
       diag(FD->getLocation(), "non-static member variables must start with 'm_'");
     }
 

@@ -6,11 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "IsDefinedInATestFile.h"
-
 #include "ElseRequiredAfterIfCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "BslCheckUtils.h"
+#include "IsDefinedInATestFile.h"
 
 using namespace clang::ast_matchers;
 
@@ -19,7 +19,7 @@ namespace tidy {
 namespace bsl {
 
 void ElseRequiredAfterIfCheck::registerMatchers(MatchFinder *Finder) {
-  const auto InterruptsControlFlow =
+  auto const InterruptsControlFlow =
     stmt(
       anyOf(
         returnStmt(),
@@ -91,41 +91,60 @@ void ElseRequiredAfterIfCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ElseRequiredAfterIfCheck::check(const MatchFinder::MatchResult &Result) {
-  auto const *Context = Result.Context;
-
-  const auto *IfMissingElse = Result.Nodes.getNodeAs<IfStmt>("if_missing_else");
-  const auto *IfMissingElseNextLine = Result.Nodes.getNodeAs<IfStmt>("if_missing_else_next_line");
-  const auto *UnneededElse = Result.Nodes.getNodeAs<Stmt>("unneeded_else");
+  auto const *IfMissingElse = Result.Nodes.getNodeAs<IfStmt>("if_missing_else");
+  auto const *IfMissingElseNextLine = Result.Nodes.getNodeAs<IfStmt>("if_missing_else_next_line");
+  auto const *UnneededElse = Result.Nodes.getNodeAs<Stmt>("unneeded_else");
 
   if (IfMissingElse) {
-    if (isDefinedInATestFile(Context, IfMissingElse->getIfLoc()))
+    auto const Loc = IfMissingElse->getIfLoc();
+    if (Loc.isInvalid())
       return;
 
-    diag(IfMissingElse->getIfLoc(), "'else' is required after 'if'");
+    if (isDefinedInATestFile(Result.Context, Loc))
+      return;
+
+    if (stmtContainsErrors(IfMissingElse, Result))
+      return;
+
+    diag(Loc, "'else' is required after 'if'");
   }
 
   if (IfMissingElseNextLine) {
-    if (isDefinedInATestFile(Context, IfMissingElseNextLine->getIfLoc()))
+    auto const Loc = IfMissingElseNextLine->getIfLoc();
+    if (Loc.isInvalid())
+      return;
+
+    if (isDefinedInATestFile(Result.Context, Loc))
+      return;
+
+    if (stmtContainsErrors(IfMissingElseNextLine, Result))
       return;
 
     auto *Parent = Result.Nodes.getNodeAs<Stmt>("parent");
-    for (auto Iter = Parent->child_begin(); Iter != Parent->child_end(); ++Iter) {
-      auto next = Iter;
+    if (stmtContainsErrors(Parent, Result))
+      return;
+
+    for (auto child = Parent->child_begin(); child != Parent->child_end(); ++child) {
+      auto next = child;
       ++next;
-      if (next == Parent->child_end() && *Iter == IfMissingElseNextLine) {
-        diag(IfMissingElseNextLine->getIfLoc(), "'else' is required after 'if' or add bsl::touch() after `if`");
+      if (next == Parent->child_end() && *child == IfMissingElseNextLine) {
+        diag(Loc, "'else' is required after 'if' or add bsl::touch() after `if`");
       }
     }
   }
 
   if (UnneededElse) {
-    if (UnneededElse->getBeginLoc().isInvalid())
+    auto const Loc = UnneededElse->getBeginLoc();
+    if (Loc.isInvalid())
       return;
 
-    if (isDefinedInATestFile(Context, UnneededElse->getBeginLoc()))
+    if (isDefinedInATestFile(Result.Context, Loc))
       return;
 
-    diag(UnneededElse->getBeginLoc(), "do not use 'else' after 'return/continue/break'");
+    if (stmtContainsErrors(UnneededElse, Result))
+      return;
+
+    diag(Loc, "do not use 'else' after 'return/continue/break'");
   }
 }
 

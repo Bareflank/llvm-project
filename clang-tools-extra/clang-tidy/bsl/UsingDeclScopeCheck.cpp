@@ -46,13 +46,13 @@ void UsingDeclScopeCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void UsingDeclScopeCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Using = Result.Nodes.getNodeAs<UsingDecl>("decl");
+  auto const *Using = Result.Nodes.getNodeAs<UsingDecl>("decl");
 
-  const auto Loc = Using->getBeginLoc();
+  auto const Loc = Using->getBeginLoc();
   if (Loc.isInvalid())
     return;
 
-  const auto Mgr = Result.SourceManager;
+  auto const Mgr = Result.SourceManager;
   if (!utils::isExpansionLocInHeaderFile(Loc, *Mgr, HeaderFileExtensions)) {
     return;
   }

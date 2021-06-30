@@ -88,8 +88,23 @@ void StructDefCheck::check(const MatchFinder::MatchResult &Result) {
   if (StructFDef) {
     auto StructLoc = StructFDef->getLocation();
 
+    // Ignore prototypes
+    if (StructFDef->getDefinition() != StructFDef)
+      return;
+
     if (StructLoc.isInvalid() || StructLoc.isMacroID())
       return;
+
+    FullSourceLoc FullLocation = Result.Context->getFullLoc(StructLoc);
+    auto const File = FullLocation.getFileEntry();
+    if (nullptr == File)
+      return;
+
+    // integral_constant cannot be marked final to work
+    auto const filename{File->tryGetRealPathName()};
+    if (filename.find("integral_constant.hpp") != std::string::npos) {
+      return;
+    }
 
     diag(StructLoc, "struct must be defined as final; cannot be base of "
                     "another struct or class");

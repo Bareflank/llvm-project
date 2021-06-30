@@ -38,9 +38,9 @@ void FunctionNameUseCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void FunctionNameUseCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Arg = Result.Nodes.getNodeAs<DeclRefExpr>("arg");
+  auto const *Arg = Result.Nodes.getNodeAs<DeclRefExpr>("arg");
   if (Arg) {
-    const auto Loc = Arg->getBeginLoc();
+    auto const Loc = Arg->getBeginLoc();
     if (Loc.isInvalid())
       return;
 
@@ -55,9 +55,9 @@ void FunctionNameUseCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  const auto *Ref = Result.Nodes.getNodeAs<DeclRefExpr>("ref");
+  auto const *Ref = Result.Nodes.getNodeAs<DeclRefExpr>("ref");
   if (Ref) {
-    const auto Loc = Ref->getBeginLoc();
+    auto const Loc = Ref->getBeginLoc();
     if (Loc.isInvalid())
       return;
 

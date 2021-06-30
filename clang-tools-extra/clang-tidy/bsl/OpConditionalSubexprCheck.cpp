@@ -22,8 +22,8 @@ void OpConditionalSubexprCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void OpConditionalSubexprCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Op = Result.Nodes.getNodeAs<ConditionalOperator>("op");
-  const auto Loc = Op->getBeginLoc();
+  auto const *Op = Result.Nodes.getNodeAs<ConditionalOperator>("op");
+  auto const Loc = Op->getBeginLoc();
 
   if (Loc.isInvalid())
     return;

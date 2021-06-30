@@ -21,9 +21,9 @@ namespace bsl {
 /// (2) to declare that a variable has the same type as
 ///    initializer of non-fundamental type
 /// (3) to declare parameters of a generic
-///    lambda expression 
+///    lambda expression
 /// (4) to declare a function (template) using trailing return
-///    type syntax. 
+///    type syntax.
 /// Note: literal types (except strings) and list initializers are not allowed
 ///
 /// For the user-facing documentation see:
@@ -34,6 +34,9 @@ public:
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+  void check_list(const ast_matchers::MatchFinder::MatchResult &Result);
+  void check_fundamental(const ast_matchers::MatchFinder::MatchResult &Result);
+  void check_trailing(const ast_matchers::MatchFinder::MatchResult &Result);
 };
 
 } // namespace bsl

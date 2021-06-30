@@ -26,9 +26,9 @@ void OpRelationalReturnBoolCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void OpRelationalReturnBoolCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Func = Result.Nodes.getNodeAs<FunctionDecl>("comp");
+  auto const *Func = Result.Nodes.getNodeAs<FunctionDecl>("comp");
 
-  const auto Loc = Func->getLocation();
+  auto const Loc = Func->getLocation();
   if (Loc.isInvalid())
     return;
 

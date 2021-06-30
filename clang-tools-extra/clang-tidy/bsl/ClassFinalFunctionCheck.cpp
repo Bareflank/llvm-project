@@ -37,9 +37,9 @@ void ClassFinalFunctionCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ClassFinalFunctionCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *NonFinal = Result.Nodes.getNodeAs<CXXMethodDecl>("nonfinal");
+  auto const *NonFinal = Result.Nodes.getNodeAs<CXXMethodDecl>("nonfinal");
   if (NonFinal) {
-    const auto Loc = NonFinal->getLocation();
+    auto const Loc = NonFinal->getLocation();
     if (Loc.isInvalid())
       return;
 
@@ -47,9 +47,9 @@ void ClassFinalFunctionCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  const auto *Virtual = Result.Nodes.getNodeAs<CXXMethodDecl>("virtual");
+  auto const *Virtual = Result.Nodes.getNodeAs<CXXMethodDecl>("virtual");
   if (Virtual) {
-    const auto Loc = Virtual->getLocation();
+    auto const Loc = Virtual->getLocation();
     if (Loc.isInvalid())
       return;
 

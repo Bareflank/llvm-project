@@ -16,35 +16,49 @@ namespace clang {
 namespace tidy {
 namespace bsl {
 
-AST_MATCHER(VarDecl, hasListInitStyle) {
-  return Node.getInitStyle() == VarDecl::InitializationStyle::ListInit;
+AST_MATCHER(Expr, isValid) {
+  return !Node.containsErrors();
 }
 
 AST_MATCHER(VarDecl, isCXXForRangeDecl) {
   return Node.isCXXForRangeDecl();
 }
 
+AST_MATCHER(VarDecl, hasListInitStyle) {
+  return Node.getInitStyle() == VarDecl::InitializationStyle::ListInit;
+}
+
 void VarBracedInitCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-    varDecl(hasInitializer(expr()),
-            unless(anyOf(isImplicit(),
-                         parmVarDecl(),
-                         isCXXForRangeDecl(),
-                         hasListInitStyle()))).bind("var"),
-    this);
+    varDecl(
+      hasInitializer(
+        expr(
+          isValid()
+        )
+      ),
+      unless(
+        anyOf(
+          isImplicit(),
+          parmVarDecl(),
+          isCXXForRangeDecl(),
+          hasListInitStyle()
+        )
+      )
+    ).bind("var"),
+    this
+  );
 }
 
 void VarBracedInitCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Var = Result.Nodes.getNodeAs<VarDecl>("var");
-  const auto Loc = Var->getLocation();
+  auto const VD = Result.Nodes.getNodeAs<VarDecl>("var");
+  if (VD->isInvalidDecl())
+    return;
 
+  auto const Loc = VD->getLocation();
   if (Loc.isInvalid())
     return;
 
-  diag(Loc, "variable '%0' is not initialized via direct list initialization")
-      << Var->getName();
-
-  return;
+  diag(Loc, "variable '%0' is not initialized via direct list initialization") << VD;
 }
 
 } // namespace bsl

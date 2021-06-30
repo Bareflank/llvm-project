@@ -27,16 +27,16 @@ void ConstObjStdMoveCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ConstObjStdMoveCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto Call = Result.Nodes.getNodeAs<CallExpr>("move");
-  const auto Loc = Call->getBeginLoc();
+  auto const Call = Result.Nodes.getNodeAs<CallExpr>("move");
+  auto const Loc = Call->getBeginLoc();
 
   if (Loc.isInvalid())
       return;
 
-  const auto Func = Result.Nodes.getNodeAs<FunctionDecl>("decl");
-  const auto Ref = Result.Nodes.getNodeAs<DeclRefExpr>("ref");
-  const auto ArgName = Ref->getFoundDecl()->getName();
-  const auto ArgLoc = Ref->getFoundDecl()->getBeginLoc();
+  auto const Func = Result.Nodes.getNodeAs<FunctionDecl>("decl");
+  auto const Ref = Result.Nodes.getNodeAs<DeclRefExpr>("ref");
+  auto const ArgName = Ref->getFoundDecl()->getName();
+  auto const ArgLoc = Ref->getFoundDecl()->getBeginLoc();
 
   diag(Loc, "invoking %0 with const argument %1")
       << Func->getQualifiedNameAsString() << ArgName;

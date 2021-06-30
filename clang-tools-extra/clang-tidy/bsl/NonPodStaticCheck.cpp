@@ -17,23 +17,33 @@ namespace tidy {
 namespace bsl {
 
 void NonPodStaticCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(varDecl(hasStaticStorageDuration(),
-                             unless(anyOf(isConstexpr(),
-                                          hasAttr(attr::ConstInit)))
-                            ).bind("decl"),
-                     this);
+  Finder->addMatcher(
+    varDecl(
+      hasStaticStorageDuration(),
+      unless(
+        anyOf(
+          isConstexpr(),
+          hasAttr(attr::ConstInit)
+        )
+      )
+    ).bind("decl"),
+    this
+  );
 }
 
 void NonPodStaticCheck::check(const MatchFinder::MatchResult &Result) {
-  auto Var = Result.Nodes.getNodeAs<VarDecl>("decl");
-  if (!Var)
+  auto const VD = Result.Nodes.getNodeAs<VarDecl>("decl");
+  if (VD->isInvalidDecl())
     return;
 
-  auto Loc = Var->getLocation();
-  if (Loc.isInvalid() || Loc.isMacroID())
+  auto const Loc = VD->getLocation();
+  if (Loc.isInvalid())
     return;
 
-  if (Var->getType().isCXX11PODType(*Result.Context))
+  if (!VD->hasInit())
+    return;
+
+  if (VD->getType().isCXX11PODType(*Result.Context))
     return;
 
   diag(Loc, "non-pod type with static storage duration");

@@ -172,6 +172,9 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
     if (isDefinedInATestFile(Context, FD->getBeginLoc()))
       return;
 
+    if (FD->isInvalidDecl())
+      return;
+
     if (FD->getMemberSpecializationInfo())
       return;
 
@@ -230,6 +233,9 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
     if (isDefinedInATestFile(Context, CXXRD->getBeginLoc()))
       return;
 
+    if (CXXRD->isInvalidDecl())
+      return;
+
     if (isa<ClassTemplateSpecializationDecl>(CXXRD))
       return;
 
@@ -274,6 +280,9 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
     if (isDefinedInATestFile(Context, VD->getBeginLoc()))
       return;
 
+    if (VD->isInvalidDecl())
+      return;
+
     if (VD->getParentFunctionOrMethod())
       return;
 
@@ -291,6 +300,9 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
     if (isDefinedInATestFile(Context, FD->getBeginLoc()))
       return;
 
+    if (FD->isInvalidDecl())
+      return;
+
     if (!hasABrief(Context, FD)) {
       diag(FD->getLocation(), "Member %0 is missing documentation. Are you missing the '@brief' command?") << FD;
     }
@@ -300,6 +312,9 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (auto const *TAD = Result.Nodes.getNodeAs<TypeAliasDecl>("alias-decl")) {
     if (isDefinedInATestFile(Context, TAD->getBeginLoc()))
+      return;
+
+    if (TAD->isInvalidDecl())
       return;
 
     if (TAD->getParentFunctionOrMethod())
@@ -329,6 +344,9 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (auto const *ED = Result.Nodes.getNodeAs<EnumDecl>("enum-decl")) {
     if (isDefinedInATestFile(Context, ED->getBeginLoc()))
+      return;
+
+    if (ED->isInvalidDecl())
       return;
 
     if (!hasABrief(Context, ED)) {

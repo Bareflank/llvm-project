@@ -25,11 +25,14 @@ namespace bsl {
 
 // Returns the StringRef of the raw Token at the given SourceLocation
 StringRef getRawTokenStr(SourceLocation Loc,
-                         const ast_matchers::MatchFinder::MatchResult &Result);
+                         ast_matchers::MatchFinder::MatchResult const &Result);
 
 Token getTokenAtLoc(SourceLocation Loc,
-                    const ast_matchers::MatchFinder::MatchResult &MatchResult,
+                    ast_matchers::MatchFinder::MatchResult const &Result,
                     IdentifierTable &IdentTable);
+
+bool stmtContainsErrors(Stmt const *const stmt,
+                        ast_matchers::MatchFinder::MatchResult const &Result);
 
 } // namespace bsl
 } // namespace tidy

@@ -40,9 +40,9 @@ void StmtSwitchDefaultBreakCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void StmtSwitchDefaultBreakCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Switch = Result.Nodes.getNodeAs<SwitchStmt>("switch");
+  auto const *Switch = Result.Nodes.getNodeAs<SwitchStmt>("switch");
 
-  const auto Loc = Switch->getBeginLoc();
+  auto const Loc = Switch->getBeginLoc();
   if (Loc.isInvalid())
     return;
 

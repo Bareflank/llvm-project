@@ -21,7 +21,20 @@ void ImplicitConversionsForbiddenCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *ICE = Result.Nodes.getNodeAs<ImplicitCastExpr>("cast");
+  auto const *ICE = Result.Nodes.getNodeAs<ImplicitCastExpr>("cast");
+  if (nullptr == ICE)
+    return;
+
+  auto const Loc = ICE->getBeginLoc();
+  if (Loc.isInvalid())
+    return;
+
+  FullSourceLoc FullLocation = Result.Context->getFullLoc(Loc);
+  auto const File = FullLocation.getFileEntry();
+  if (nullptr == File)
+    return;
+
+  auto const filename{File->tryGetRealPathName()};
 
   // If we are making an explicit cast using static_cast, the implicit case can
   // be safely ignored.
@@ -46,10 +59,46 @@ void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Re
       ICE->getCastKind() == CK_ConstructorConversion)
     return;
 
-  // Decaying a C-Style string is ok so long as it is a literal.
+  // Decaying a C-Style string is ok so long as it is a literal. Also,
+  // bsl::array needs to do this to work so that others do not have to do this.
   if (ICE->getCastKind() == CK_ArrayToPointerDecay) {
     if (isa<StringLiteral>(ICE->getSubExpr()))
       return;
+
+    if (filename.find("array.hpp") != std::string::npos ||
+        filename.find("fmt.hpp") != std::string::npos) {
+      return;
+    }
+  }
+
+  // Some BSL capabilites require implicit casts to function properly
+  if (ICE->getCastKind() == CK_DerivedToBase) {
+    if (filename.find("invoke_impl_mfp_o.hpp") != std::string::npos ||
+        filename.find("invoke_impl_mfp_p.hpp") != std::string::npos ||
+        filename.find("invoke_impl_mfp_r.hpp") != std::string::npos ||
+        filename.find("invoke_impl_mop_o.hpp") != std::string::npos ||
+        filename.find("invoke_impl_mop_p.hpp") != std::string::npos ||
+        filename.find("invoke_impl_mop_r.hpp") != std::string::npos) {
+      return;
+    }
+  }
+
+  // Some BSL capabilites require implicit casts to function properly
+  if (ICE->getCastKind() == CK_IntegralToBoolean) {
+    if (filename.find("add_lvalue_reference.hpp") != std::string::npos ||
+        filename.find("add_pointer.hpp") != std::string::npos ||
+        filename.find("add_rvalue_reference.hpp") != std::string::npos ||
+        filename.find("is_nothrow_convertible.hpp") != std::string::npos ||
+        filename.find("is_nothrow_destructible.hpp") != std::string::npos) {
+      return;
+    }
+  }
+
+  // Some BSL capabilites require implicit casts to function properly
+  if (ICE->getCastKind() == CK_IntegralCast) {
+    if (filename.find("is_nothrow_convertible.hpp") != std::string::npos) {
+      return;
+    }
   }
 
   // If we are casting from a boolean or char type to an int implicitly,
@@ -79,11 +128,14 @@ void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Re
   }
 
   if (ICE->getCastKind() == CK_IntegralCast) {
-    diag(ICE->getBeginLoc(), "implicit conversions are forbidden (%0 from %1 to %2)")
-      << ICE->getCastKindName() << ICE->getSubExpr()->getType().getAsString() << ICE->getType().getAsString();
+    diag(Loc, "implicit conversions are forbidden (%0 from '%1' to '%2')")
+      << ICE->getCastKindName()
+      << ICE->getSubExpr()->getType().getAsString()
+      << ICE->getType().getAsString();
   }
   else {
-    diag(ICE->getBeginLoc(), "implicit conversions are forbidden (%0)") << ICE->getCastKindName();
+    diag(Loc, "implicit conversions are forbidden (%0)")
+      << ICE->getCastKindName();
   }
 }
 

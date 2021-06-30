@@ -47,8 +47,35 @@ void NameCaseCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *ND = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  auto const *ND = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  if (nullptr == ND) {
+    return;
+  }
+
   auto const name{ND->getNameAsString()};
+  if (name.empty()) {
+    return;
+  }
+
+  auto const Loc = ND->getLocation();
+  if (Loc.isInvalid())
+    return;
+
+  FullSourceLoc FullLocation = Result.Context->getFullLoc(Loc);
+  auto const File = FullLocation.getFileEntry();
+  if (nullptr == File)
+    return;
+
+  auto const filename{File->tryGetRealPathName()};
+  if (filename.find("color.hpp") != std::string::npos ||
+      filename.find("dontcare_t.hpp") != std::string::npos ||
+      filename.find("dormant_t.hpp") != std::string::npos ||
+      filename.find("exit_code.hpp") != std::string::npos ||
+      filename.find("in_place_t.hpp") != std::string::npos ||
+      filename.find("npos.hpp") != std::string::npos ||
+      filename.find("numeric_limits.hpp") != std::string::npos) {
+    return;
+  }
 
   if (isa<FunctionTemplateDecl>(ND) ||
       isa<CXXConstructorDecl>(ND) ||
@@ -62,17 +89,27 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
       isa<NonTypeTemplateParmDecl>(ND) ||
       isa<TemplateTemplateParmDecl>(ND)) {
     if (!isUpperCase(name)) {
-      diag(ND->getLocation(), "name of template variable is not in upper case");
+      diag(Loc, "name of template variable is not in upper case");
     }
 
     return;
   }
 
   if (auto const * VD = dyn_cast<VarDecl>(ND)) {
+    auto const qualified_name{VD->getType().getUnqualifiedType().getAsString()};
+    if (qualified_name == "basic_errc_type<>")
+      return;
+
+    if (name == "endl" ||
+        name == "nullops" ||
+        name == "ptrops") {
+      return;
+    }
+
     if (VD->hasGlobalStorage() && VD->isConstexpr()) {
       if (!VD->isStaticLocal() && !VD->isStaticDataMember()) {
         if (!isUpperCase(name)) {
-          diag(ND->getLocation(), "name of global constexpr is not in upper case");
+          diag(Loc, "name of global constexpr is not in upper case");
         }
 
         return;
@@ -81,7 +118,7 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (!isLowerCase(name)) {
-    diag(ND->getLocation(), "name of variable is not in lower case");
+    diag(Loc, "name of variable is not in lower case");
   }
 }
 

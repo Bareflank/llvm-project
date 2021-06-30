@@ -30,8 +30,8 @@ void SpecialMemberFunctionsCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void SpecialMemberFunctionsCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *D = Result.Nodes.getNodeAs<CXXRecordDecl>("class");
-  const auto Loc = D->getLocation();
+  auto const *D = Result.Nodes.getNodeAs<CXXRecordDecl>("class");
+  auto const Loc = D->getLocation();
 
   if (Loc.isInvalid())
     return;

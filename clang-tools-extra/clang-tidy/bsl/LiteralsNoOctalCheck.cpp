@@ -36,8 +36,7 @@ static bool isOctalInteger(SourceLocation Loc,
 
   StringRef Str(Buf, Tok.getLength());
 
-  if (!Str.startswith("0") || Str.startswith_lower("0x") ||
-      Str.startswith_lower("0b"))
+  if (!Str.startswith("0") || Str.startswith_lower("0x") || Str.startswith_lower("0b"))
     return false;
 
   return Str.find_first_of("01234567", 1) != StringRef::npos;
@@ -60,6 +59,10 @@ static bool containsOctalEscape(SourceLocation Loc,
     return false;
 
   StringRef Str(Buf, Tok.getLength());
+
+  llvm::Regex OctalEscANSIColor("[\\][0][3][3]");
+  if (OctalEscANSIColor.match(Str))
+    return false;
 
   llvm::Regex OctalEsc1("[\\][1-7]");
   llvm::Regex OctalEsc2("[\\][0-7][0-7]");

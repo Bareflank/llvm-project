@@ -55,9 +55,9 @@ void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Ctor = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
-  const auto ArgQualType = Ctor->getParamDecl(0)->getType();
-  const auto *ArgType = ArgQualType.getTypePtrOrNull();
+  auto const *Ctor = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
+  auto const ArgQualType = Ctor->getParamDecl(0)->getType();
+  auto const *ArgType = ArgQualType.getTypePtrOrNull();
 
   if (!ArgType)
     return;
@@ -65,7 +65,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
   if (!ArgType->isBuiltinType())
     return;
 
-  const auto Loc = Ctor->getLocation();
+  auto const Loc = Ctor->getLocation();
 
   diag(Loc, "constructor %0 with single argument of builtin type"
             " must be marked explicit")
