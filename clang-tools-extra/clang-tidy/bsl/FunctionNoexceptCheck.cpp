@@ -16,30 +16,38 @@ namespace clang {
 namespace tidy {
 namespace bsl {
 
-AST_MATCHER(FunctionDecl, noExceptSpec) {
-  auto ExceptType = Node.getExceptionSpecType();
-  return ExceptType == EST_BasicNoexcept || ExceptType == EST_NoexceptFalse ||
-         ExceptType == EST_Unevaluated || ExceptType == EST_DependentNoexcept ||
-         ExceptType == EST_NoexceptTrue;
-}
-
 void FunctionNoexceptCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(functionDecl(unless(anyOf(noExceptSpec(), isImplicit())))
-                         .bind("noexcept"),
-                     this);
+  Finder->addMatcher(
+    functionDecl(
+      unless(
+        isImplicit()
+      )
+    ).bind("decl"),
+    this
+  );
 }
 
 void FunctionNoexceptCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto Mgr = Result.SourceManager;
+  auto const *FD = Result.Nodes.getNodeAs<FunctionDecl>("decl");
+  if (nullptr == FD)
+    return;
 
-  const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("noexcept");
-  if (MatchedDecl) {
-    auto Loc = MatchedDecl->getLocation();
-    if (Mgr->getFileID(Loc) != Mgr->getMainFileID())
-      return;
-    diag(Loc, "Every function should be marked as noexcept or noexcept(false)");
-  }
+  auto const Loc = FD->getLocation();
+  if (Loc.isInvalid())
+    return;
+
+  if (FD->getExceptionSpecType() != EST_None)
+    return;
+
+  if (isa<CXXDeductionGuideDecl>(FD))
+    return;
+
+  diag(Loc, "every function should be marked as noexcept or noexcept(false)");
 }
+
+// clang::ExceptionSpecificationType::
+// EST_None
+
 
 } // namespace bsl
 } // namespace tidy

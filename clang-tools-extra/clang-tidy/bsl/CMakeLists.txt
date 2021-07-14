@@ -29,8 +29,10 @@ add_clang_library(clangTidyBslModule
   FunctionNoexceptCheck.cpp
   IdentifierTypographicallyUnambiguousCheck.cpp
   ImplicitConversionsForbiddenCheck.cpp
+  IntegralLiteralsInConstexprCheck.cpp
   LambdaImplicitCaptureCheck.cpp
   LambdaParamListCheck.cpp
+  LeftSideConstantsCheck.cpp
   LiteralsAsciiOnlyCheck.cpp
   LiteralsDigitSeparatorCheck.cpp
   LiteralsNoOctalCheck.cpp
@@ -50,6 +52,7 @@ add_clang_library(clangTidyBslModule
   OpLogicalPostfixCheck.cpp
   OpMixedIncrementDecrementCheck.cpp
   OpRelationalReturnBoolCheck.cpp
+  PassByReferenceCheck.cpp
   PureOverrideCheck.cpp
   SpecialMemberFunctionsCheck.cpp
   StmtForbiddenCheck.cpp
@@ -59,14 +62,15 @@ add_clang_library(clangTidyBslModule
   StructDefCheck.cpp
   TemplateGenericParamCheck.cpp
   TernaryOperatorForbiddenCheck.cpp
+  TypesFixedWidthIntsArithmeticCheckCheck.cpp
   TypesFixedWidthIntsCheck.cpp
   TypesNoWideCharCheck.cpp
-  UnusedReturnValueCheck.cpp
   UserDefinedTypeNamesMatchHeaderNameCheck.cpp
   UsingDeclScopeCheck.cpp
   UsingIdentUniqueNamespaceCheck.cpp
   UsingNamespaceForbiddenCheck.cpp
   VarBracedInitCheck.cpp
+  VerifyConstCheck.cpp
 
   LINK_LIBS
   clangAST

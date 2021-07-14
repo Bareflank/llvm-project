@@ -44,12 +44,12 @@ void DestructorAccessSpecifierCheck::registerMatchers(MatchFinder *Finder) {
 
 void DestructorAccessSpecifierCheck::check(
     const MatchFinder::MatchResult &Result) {
-  const auto *MatchedDecl =
+  auto const *MatchedDecl =
       Result.Nodes.getNodeAs<CXXDestructorDecl>("destructor");
   if (MatchedDecl) {
     auto Loc = MatchedDecl->getLocation();
 
-    const auto Parent = MatchedDecl->getParent();
+    auto const Parent = MatchedDecl->getParent();
     if (Parent->isLambda() || (MatchedDecl->getAccess() == AS_public &&
                                Parent->isEffectivelyFinal())) {
       return;

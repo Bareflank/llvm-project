@@ -34,20 +34,27 @@ void NodiscardCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void NodiscardCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Decl = Result.Nodes.getNodeAs<FunctionDecl>("decl");
-  const auto Loc = Decl->getLocation();
+  auto const FD = Result.Nodes.getNodeAs<FunctionDecl>("decl");
+  if (FD->isInvalidDecl())
+    return;
 
+  auto const Loc = FD->getLocation();
   if (Loc.isInvalid())
     return;
 
-  if (Decl->getFriendObjectKind() != clang::Decl::FriendObjectKind::FOK_None) {
+  if (FD->getFriendObjectKind() != clang::Decl::FriendObjectKind::FOK_None) {
     return;
   }
 
-  if (dyn_cast<CXXDeductionGuideDecl>(Decl))
+  if (dyn_cast<CXXDeductionGuideDecl>(FD))
     return;
 
-  diag(Loc, "function %0 should be marked [[nodiscard]] or [[maybe_unused]]") << Decl;
+  if (auto const MD = dyn_cast<CXXMethodDecl>(FD)) {
+    if (MD->getParent()->isLambda())
+      return;
+  }
+
+  diag(Loc, "function %0 should be marked [[nodiscard]] or [[maybe_unused]]") << FD;
 }
 
 } // namespace bsl

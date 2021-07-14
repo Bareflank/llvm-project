@@ -21,9 +21,9 @@ void StmtForbiddenCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void StmtForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *S = Result.Nodes.getNodeAs<Stmt>("stmt");
+  auto const *S = Result.Nodes.getNodeAs<Stmt>("stmt");
 
-  const auto Loc = S->getBeginLoc();
+  auto const Loc = S->getBeginLoc();
   if (Loc.isInvalid())
     return;
 

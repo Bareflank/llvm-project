@@ -78,13 +78,13 @@ void OpLogicalPostfixCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void OpLogicalPostfixCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Op = Result.Nodes.getNodeAs<BinaryOperator>("op");
-  const auto Loc = Op->getOperatorLoc();
+  auto const *Op = Result.Nodes.getNodeAs<BinaryOperator>("op");
+  auto const Loc = Op->getOperatorLoc();
 
   if (Loc.isInvalid())
     return;
 
-  const auto Mgr = Result.SourceManager;
+  auto const Mgr = Result.SourceManager;
 
   if (Op->getOpcodeStr() == "&&") {
     auto AndOperand = Result.Nodes.getNodeAs<Expr>("and-nonpostfix");

@@ -31,15 +31,15 @@ void LiteralsDigitSeparatorCheck::check(const MatchFinder::MatchResult &Result) 
   if (!Result.Context->getLangOpts().CPlusPlus14)
     return;
 
-  const auto Lit = Result.Nodes.getNodeAs<IntegerLiteral>("lit");
+  auto const Lit = Result.Nodes.getNodeAs<IntegerLiteral>("lit");
   if (!Lit)
     return;
 
-  const auto Loc = Lit->getBeginLoc();
+  auto const Loc = Lit->getBeginLoc();
   if (Loc.isInvalid() || Loc.isMacroID())
     return;
 
-  const auto Str = getRawTokenStr(Loc, Result);
+  auto const Str = getRawTokenStr(Loc, Result);
   if (!Str.contains("'"))
     return;
 

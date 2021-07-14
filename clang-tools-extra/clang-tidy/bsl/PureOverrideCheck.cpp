@@ -26,13 +26,13 @@ void PureOverrideCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void PureOverrideCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Pure = Result.Nodes.getNodeAs<CXXMethodDecl>("pure");
+  auto const *Pure = Result.Nodes.getNodeAs<CXXMethodDecl>("pure");
 
-  const auto Loc = Pure->getLocation();
+  auto const Loc = Pure->getLocation();
   if (Loc.isInvalid())
     return;
 
-  for (const auto OM : Pure->overridden_methods()) {
+  for (auto const OM : Pure->overridden_methods()) {
     if (OM->isPure())
       continue;
 

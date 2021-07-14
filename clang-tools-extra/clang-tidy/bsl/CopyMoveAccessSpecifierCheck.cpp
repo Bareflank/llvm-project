@@ -31,7 +31,7 @@ void CopyMoveAccessSpecifierCheck::registerMatchers(MatchFinder *Finder) {
 
 void CopyMoveAccessSpecifierCheck::check(
     const MatchFinder::MatchResult &Result) {
-  const auto *VDecl = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
+  auto const *VDecl = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
   if (VDecl) {
     auto LocV = VDecl->getLocation();
     if (!VDecl->getParent()->isEffectivelyFinal())
@@ -41,7 +41,7 @@ void CopyMoveAccessSpecifierCheck::check(
           "“=delete” in base class; otherwise declare non-base class as final");
   }
 
-  const auto *MDecl = Result.Nodes.getNodeAs<CXXMethodDecl>("op");
+  auto const *MDecl = Result.Nodes.getNodeAs<CXXMethodDecl>("op");
   if (MDecl) {
     auto LocM = MDecl->getLocation();
     if (!MDecl->getParent()->isEffectivelyFinal())

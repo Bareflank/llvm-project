@@ -7,6 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "BslCheckUtils.h"
+#include <string>
+#include <sstream>
 
 using namespace clang::ast_matchers;
 
@@ -14,8 +16,8 @@ namespace clang {
 namespace tidy {
 namespace bsl {
 
-StringRef getRawTokenStr(SourceLocation Loc,
-                         const MatchFinder::MatchResult &Result) {
+StringRef getRawTokenStr(SourceLocation const Loc,
+                         MatchFinder::MatchResult const &Result) {
   if (Loc.isInvalid() || Loc.isMacroID())
     return StringRef();
 
@@ -39,13 +41,13 @@ StringRef getRawTokenStr(SourceLocation Loc,
 // This function is taken from ../google/IntegerTypesCheck.cpp. The check
 // below is similar except that is matches additional keywords and doesn't
 // provide a suggested replacement.
-Token getTokenAtLoc(SourceLocation Loc,
-                           const MatchFinder::MatchResult &MatchResult,
-                           IdentifierTable &IdentTable) {
+Token getTokenAtLoc(SourceLocation const Loc,
+                    MatchFinder::MatchResult const &Result,
+                    IdentifierTable &IdentTable) {
   Token Tok;
 
-  if (Lexer::getRawToken(Loc, Tok, *MatchResult.SourceManager,
-                         MatchResult.Context->getLangOpts(), false))
+  if (Lexer::getRawToken(Loc, Tok, *Result.SourceManager,
+                         Result.Context->getLangOpts(), false))
     return Tok;
 
   if (Tok.is(tok::raw_identifier)) {
@@ -55,6 +57,21 @@ Token getTokenAtLoc(SourceLocation Loc,
   }
 
   return Tok;
+}
+
+bool stmtContainsErrors(Stmt const *const stmt,
+                        MatchFinder::MatchResult const &Result) {
+  if (nullptr == stmt)
+    return true;
+
+  std::string ast_dump{};
+  llvm::raw_string_ostream ss{ast_dump};
+
+  stmt->dump(ss, *Result.Context);
+  if (ast_dump.find("contains-errors") != std::string::npos)
+    return true;
+
+  return false;
 }
 
 } // namespace bsl

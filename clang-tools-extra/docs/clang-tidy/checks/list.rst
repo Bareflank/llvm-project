@@ -59,7 +59,7 @@ Clang-Tidy Checks
    `bsl-copy-move-access-specifier <bsl-copy-move-access-specifier.html>`_,
    `bsl-decl-forbidden <bsl-decl-forbidden.html>`_,
    `bsl-destructor-access-specifier <bsl-destructor-access-specifier.html>`_,
-   `bsl-documentation <bsl-documentation.html>`_, "Yes"
+   `bsl-documentation <bsl-documentation.html>`_,
    `bsl-else-required-after-if <bsl-else-required-after-if.html>`_,
    `bsl-empty-if-else <bsl-empty-if-else.html>`_,
    `bsl-enum-explicit <bsl-enum-explicit.html>`_,
@@ -72,8 +72,10 @@ Clang-Tidy Checks
    `bsl-function-noexcept <bsl-function-noexcept.html>`_,
    `bsl-identifier-typographically-unambiguous <bsl-identifier-typographically-unambiguous.html>`_,
    `bsl-implicit-conversions-forbidden <bsl-implicit-conversions-forbidden.html>`_,
+   `bsl-integral-literals-in-constexpr <bsl-integral-literals-in-constexpr.html>`_,
    `bsl-lambda-implicit-capture <bsl-lambda-implicit-capture.html>`_,
    `bsl-lambda-param-list <bsl-lambda-param-list.html>`_,
+   `bsl-left-side-constants <bsl-left-side-constants.html>`_, "Yes"
    `bsl-literals-ascii-only <bsl-literals-ascii-only.html>`_,
    `bsl-literals-digit-separator <bsl-literals-digit-separator.html>`_,
    `bsl-literals-no-octal <bsl-literals-no-octal.html>`_,
@@ -92,6 +94,7 @@ Clang-Tidy Checks
    `bsl-op-logical-postfix <bsl-op-logical-postfix.html>`_, "Yes"
    `bsl-op-mixed-increment-decrement <bsl-op-mixed-increment-decrement.html>`_,
    `bsl-op-relational-return-bool <bsl-op-relational-return-bool.html>`_,
+   `bsl-pass-by-reference <bsl-pass-by-reference.html>`_,
    `bsl-pure-override <bsl-pure-override.html>`_,
    `bsl-special-member-functions <bsl-special-member-functions.html>`_,
    `bsl-stmt-forbidden <bsl-stmt-forbidden.html>`_,
@@ -101,6 +104,7 @@ Clang-Tidy Checks
    `bsl-struct-def <bsl-struct-def.html>`_,
    `bsl-template-generic-param <bsl-template-generic-param.html>`_,
    `bsl-ternary-operator-forbidden <bsl-ternary-operator-forbidden.html>`_,
+   `bsl-types-fixed-width-ints-arithmetic-check <bsl-types-fixed-width-ints-arithmetic-check.html>`_,
    `bsl-types-fixed-width-ints <bsl-types-fixed-width-ints.html>`_,
    `bsl-types-no-wide-char <bsl-types-no-wide-char.html>`_,
    `bsl-unused-return-value <bsl-unused-return-value.html>`_,
@@ -109,6 +113,7 @@ Clang-Tidy Checks
    `bsl-using-ident-unique-namespace <bsl-using-ident-unique-namespace.html>`_,
    `bsl-using-namespace-forbidden <bsl-using-namespace-forbidden.html>`_,
    `bsl-var-braced-init <bsl-var-braced-init.html>`_,
+   `bsl-verify-const <bsl-verify-const.html>`_,
    `bugprone-argument-comment <bugprone-argument-comment.html>`_, "Yes"
    `bugprone-assert-side-effect <bugprone-assert-side-effect.html>`_,
    `bugprone-bad-signal-to-kill-thread <bugprone-bad-signal-to-kill-thread.html>`_,
@@ -133,7 +138,7 @@ Clang-Tidy Checks
    `bugprone-misplaced-widening-cast <bugprone-misplaced-widening-cast.html>`_,
    `bugprone-move-forwarding-reference <bugprone-move-forwarding-reference.html>`_, "Yes"
    `bugprone-multiple-statement-macro <bugprone-multiple-statement-macro.html>`_,
-   `bugprone-no-escape <bugprone-no-escape.html>`_, "Yes"
+   `bugprone-no-escape <bugprone-no-escape.html>`_,
    `bugprone-not-null-terminated-result <bugprone-not-null-terminated-result.html>`_, "Yes"
    `bugprone-parent-virtual-call <bugprone-parent-virtual-call.html>`_, "Yes"
    `bugprone-posix-return <bugprone-posix-return.html>`_, "Yes"
@@ -277,7 +282,7 @@ Clang-Tidy Checks
    `modernize-deprecated-headers <modernize-deprecated-headers.html>`_, "Yes"
    `modernize-deprecated-ios-base-aliases <modernize-deprecated-ios-base-aliases.html>`_, "Yes"
    `modernize-loop-convert <modernize-loop-convert.html>`_, "Yes"
-   `modernize-make-shared <modernize-make-shared.html>`_,
+   `modernize-make-shared <modernize-make-shared.html>`_, "Yes"
    `modernize-make-unique <modernize-make-unique.html>`_, "Yes"
    `modernize-pass-by-value <modernize-pass-by-value.html>`_, "Yes"
    `modernize-raw-string-literal <modernize-raw-string-literal.html>`_, "Yes"

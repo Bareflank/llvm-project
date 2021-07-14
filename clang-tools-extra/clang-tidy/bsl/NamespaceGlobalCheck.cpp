@@ -27,7 +27,17 @@ void NamespaceGlobalCheck::registerMatchers(MatchFinder *Finder) {
                functionDecl(anyOf(
                    hasName("main"),
                    hasOverloadedOperatorName("new"),
-                   hasOverloadedOperatorName("delete")
+                   hasOverloadedOperatorName("delete"),
+                   hasName("operator\"\"_u8"),
+                   hasName("operator\"\"_u16"),
+                   hasName("operator\"\"_u32"),
+                   hasName("operator\"\"_u64"),
+                   hasName("operator\"\"_umax"),
+                   hasName("operator\"\"_i8"),
+                   hasName("operator\"\"_i16"),
+                   hasName("operator\"\"_i32"),
+                   hasName("operator\"\"_i64"),
+                   hasName("operator\"\"_imax")
                )),
                namespaceDecl(),
                linkageSpecDecl(isExternC())
@@ -37,9 +47,9 @@ void NamespaceGlobalCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void NamespaceGlobalCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *GlobalDecl = Result.Nodes.getNodeAs<Decl>("global-decl");
+  auto const *GlobalDecl = Result.Nodes.getNodeAs<Decl>("global-decl");
 
-  const auto Loc = GlobalDecl->getLocation();
+  auto const Loc = GlobalDecl->getLocation();
   if (Loc.isInvalid())
     return;
 

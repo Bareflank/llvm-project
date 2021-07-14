@@ -9,6 +9,7 @@
 #include "LambdaImplicitCaptureCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "IsDefinedInATestFile.h"
 
 using namespace clang::ast_matchers;
 
@@ -27,13 +28,16 @@ void LambdaImplicitCaptureCheck::check(const MatchFinder::MatchResult &Result) {
   if (CaptureLoc.isInvalid())
     return;
 
+  if (isDefinedInATestFile(Result.Context, Lambda->getBeginLoc()))
+    return;
+
   auto Begin = CaptureLoc.getBegin();
   if (Begin.isInvalid() || Begin.isMacroID())
     return;
 
   auto CapList = Lambda->implicit_captures();
 
-  for (const auto &Cap : CapList) {
+  for (auto const &Cap : CapList) {
     auto Var = Cap.getCapturedVar();
     if (!Var)
       continue;

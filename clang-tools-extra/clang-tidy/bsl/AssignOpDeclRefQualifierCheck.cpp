@@ -23,17 +23,24 @@ void AssignOpDeclRefQualifierCheck::registerMatchers(MatchFinder *Finder) {
       unless(
         isImplicit()
       )
-    ).bind("assign"),
+    ).bind("decl"),
     this
   );
 }
 
-void AssignOpDeclRefQualifierCheck::check(
-    const MatchFinder::MatchResult &Result) {
-  const auto *MatchedDecl = Result.Nodes.getNodeAs<CXXMethodDecl>("assign");
-  if (MatchedDecl->getRefQualifier() == RQ_None)
-    diag(MatchedDecl->getLocation(),
-        "assignment operators should be declared with the ref-qualifier &");
+void AssignOpDeclRefQualifierCheck::check(const MatchFinder::MatchResult &Result) {
+  auto const D = Result.Nodes.getNodeAs<CXXMethodDecl>("decl");
+  if (D->isInvalidDecl())
+    return;
+
+  auto const Loc = D->getLocation();
+  if (Loc.isInvalid())
+    return;
+
+  if (D->getRefQualifier() != RQ_None)
+    return;
+
+  diag(Loc, "assignment operators should be declared with the ref-qualifier &");
 }
 
 } // namespace bsl

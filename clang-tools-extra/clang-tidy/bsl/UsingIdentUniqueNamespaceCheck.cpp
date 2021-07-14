@@ -38,7 +38,7 @@ void UsingIdentUniqueNamespaceCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void UsingIdentUniqueNamespaceCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  auto const *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
 
   // These are all decl types that we do not need to track. For the template
   // decls, there is a non-template decl as a child that we are watching and

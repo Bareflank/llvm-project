@@ -24,21 +24,21 @@ void DeclForbiddenCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void DeclForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *D = Result.Nodes.getNodeAs<Decl>("decl");
+  auto const *D = Result.Nodes.getNodeAs<Decl>("decl");
 
-  const auto Loc = D->getBeginLoc();
+  auto const Loc = D->getBeginLoc();
   if (Loc.isInvalid())
     return;
 
-  const auto Tag = dyn_cast<TagDecl>(D);
+  auto const Tag = dyn_cast<TagDecl>(D);
   if (Tag && Tag->isUnion()) {
     diag(Loc, "unions are forbidden");
     return;
   }
 
-  const auto Friend = dyn_cast<FriendDecl>(D);
+  auto const Friend = dyn_cast<FriendDecl>(D);
   if (Friend) {
-    const auto FriendLoc = Friend->getFriendLoc();
+    auto const FriendLoc = Friend->getFriendLoc();
     diag(FriendLoc, "friends are forbidden");
     return;
   }

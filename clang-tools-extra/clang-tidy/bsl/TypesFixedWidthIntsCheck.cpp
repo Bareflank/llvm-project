@@ -29,6 +29,18 @@ void TypesFixedWidthIntsCheck::check(const MatchFinder::MatchResult &Result) {
   if (Loc.isInvalid() || Loc.isMacroID())
     return;
 
+  FullSourceLoc FullLocation = Result.Context->getFullLoc(Loc);
+  auto const File = FullLocation.getFileEntry();
+  if (nullptr == File)
+    return;
+
+  // These have to have non-fixed width types to work at all
+  auto const filename{File->tryGetRealPathName()};
+  if (filename.find("char_type.hpp") != std::string::npos ||
+      filename.find("cstdint.hpp") != std::string::npos) {
+    return;
+  }
+
   if (auto QL = TL.getAs<QualifiedTypeLoc>())
     TL = QL.getUnqualifiedLoc();
 

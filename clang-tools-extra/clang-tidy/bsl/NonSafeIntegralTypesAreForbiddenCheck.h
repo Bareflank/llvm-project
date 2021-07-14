@@ -21,6 +21,8 @@ public:
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+  void check_var_decl(const ast_matchers::MatchFinder::MatchResult &Result);
+  void check_field_decl(const ast_matchers::MatchFinder::MatchResult &Result);
 };
 
 } // namespace bsl

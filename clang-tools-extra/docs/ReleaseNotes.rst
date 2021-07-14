@@ -361,6 +361,11 @@ New checks
 
   Warns of any implicit conversion
 
+- New :doc:`bsl-integral-literals-in-constexpr
+  <clang-tidy/checks/bsl-integral-literals-in-constexpr>` check.
+
+  FIXME: add release notes.
+
 - New :doc:`bsl-lambda-implicit-capture
   <clang-tidy/checks/bsl-lambda-implicit-capture>` check.
 
@@ -370,6 +375,11 @@ New checks
   <clang-tidy/checks/bsl-lambda-param-list>` check.
 
   Ensures lambda expressions' parameter lists are explicit.
+
+- New :doc:`bsl-left-side-constants
+  <clang-tidy/checks/bsl-left-side-constants>` check.
+
+  FIXME: add release notes.
 
 - New :doc:`bsl-literals-digit-separator
   <clang-tidy/checks/bsl-literals-digit-separator>` check.
@@ -451,6 +461,11 @@ New checks
 
   Warns if a comparison operator does not return a bool
 
+- New :doc:`bsl-pass-by-reference
+  <clang-tidy/checks/bsl-pass-by-reference>` check.
+
+  FIXME: add release notes.
+
 - New :doc:`bsl-pure-override
   <clang-tidy/checks/bsl-pure-override>` check.
 
@@ -504,6 +519,11 @@ New checks
 
   Warns if you use the ternary operator
 
+- New :doc:`bsl-types-fixed-width-ints-arithmetic-check
+  <clang-tidy/checks/bsl-types-fixed-width-ints-arithmetic-check>` check.
+
+  FIXME: add release notes.
+
 - New :doc:`bsl-user-defined-type-names-match-header-name
   <clang-tidy/checks/bsl-user-defined-type-names-match-header-name>` check.
 
@@ -537,6 +557,11 @@ New checks
   <clang-tidy/checks/bsl-for-loop-counter>` check.
 
   Warns if for loop does not contain single loop-counter and uses floating point type.
+
+- New :doc:`bsl-verify-const
+  <clang-tidy/checks/bsl-verify-const>` check.
+
+  FIXME: add release notes.
 
 - New :doc:`cppcoreguidelines-avoid-non-const-global-variables
   <clang-tidy/checks/cppcoreguidelines-avoid-non-const-global-variables>` check.

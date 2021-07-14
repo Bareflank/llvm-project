@@ -9,6 +9,7 @@
 #include "EmptyIfElseCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "BslCheckUtils.h"
 
 using namespace clang::ast_matchers;
 
@@ -30,17 +31,27 @@ void EmptyIfElseCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void EmptyIfElseCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *IF = Result.Nodes.getNodeAs<IfStmt>("if");
+  auto const IS = Result.Nodes.getNodeAs<IfStmt>("if");
+  if (stmtContainsErrors(IS, Result))
+    return;
 
-  if (IF->getThen()) {
-    if (IF->getThen()->children().empty()) {
-      diag(IF->getIfLoc(), "Empty 'if' statements are forbidden");
+  if (auto const IfThen = IS->getThen()) {
+    auto const Loc = IS->getIfLoc();
+    if (Loc.isInvalid())
+      return;
+
+    if (IfThen->children().empty()) {
+      diag(Loc, "Empty 'if' statements are forbidden");
     }
   }
 
-  if (IF->getElse()) {
-    if (IF->getElse()->children().empty()) {
-      diag(IF->getElseLoc(), "Empty 'else' statements are forbidden");
+  if (auto const IfElse = IS->getElse()) {
+    auto const Loc = IS->getElseLoc();
+    if (Loc.isInvalid())
+      return;
+
+    if (IfElse->children().empty()) {
+      diag(Loc, "Empty 'else' statements are forbidden");
     }
   }
 }

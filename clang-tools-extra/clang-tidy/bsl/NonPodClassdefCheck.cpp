@@ -27,14 +27,15 @@ void NonPodClassdefCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void NonPodClassdefCheck::check(const MatchFinder::MatchResult &Result) {
-  // Member data
-  auto Var = Result.Nodes.getNodeAs<DeclaratorDecl>("private");
-  if (Var) {
-    auto Loc = Var->getLocation();
-    if (Loc.isInvalid() || Loc.isMacroID())
-      return;
-    diag(Loc, "non-POD class types should have private member data");
-  }
+  auto DD = Result.Nodes.getNodeAs<DeclaratorDecl>("private");
+  if (nullptr == DD)
+    return;
+
+  auto Loc = DD->getLocation();
+  if (Loc.isInvalid() || Loc.isMacroID())
+    return;
+
+  diag(Loc, "non-POD class types should have private member data");
 }
 
 } // namespace bsl

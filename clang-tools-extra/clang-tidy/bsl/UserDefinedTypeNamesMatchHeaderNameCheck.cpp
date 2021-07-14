@@ -28,7 +28,7 @@ void UserDefinedTypeNamesMatchHeaderNameCheck::registerMatchers(MatchFinder *Fin
 }
 
 void UserDefinedTypeNamesMatchHeaderNameCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  auto const *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
 
   if (!D->getBeginLoc().isValid())
     return;

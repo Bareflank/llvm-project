@@ -17,17 +17,21 @@ namespace tidy {
 namespace bsl {
 
 void ComparisonOperatorsForbiddenCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(binaryOperator(hasAnyOperatorName(">=", "<=")).bind("op"), this);
+  // Finder->addMatcher(binaryOperator(hasAnyOperatorName(">=", "<=")).bind("op"), this);
 }
 
 void ComparisonOperatorsForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Op = Result.Nodes.getNodeAs<BinaryOperator>("op");
-  const auto Loc = Op->getOperatorLoc();
+  // auto const *Op = Result.Nodes.getNodeAs<BinaryOperator>("op");
+  // auto const Loc = Op->getOperatorLoc();
 
-  if (Loc.isInvalid())
-    return;
+  // if (Loc.isInvalid())
+  //   return;
 
-  diag(Loc, "comparison operators >= and <= are forbidden");
+  // diag(Loc, "comparison operators >= and <= are forbidden");
+
+  /// TODO:
+  /// - This check needs to be deleted as it is no longer needed.
+  ///
 }
 
 } // namespace bsl

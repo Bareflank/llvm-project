@@ -47,7 +47,7 @@ void NameCaseCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *ND = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  auto const *ND = Result.Nodes.getNodeAs<NamedDecl>("decl");
   if (nullptr == ND) {
     return;
   }
@@ -57,9 +57,25 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  const auto Loc = ND->getLocation();
+  auto const Loc = ND->getLocation();
   if (Loc.isInvalid())
     return;
+
+  FullSourceLoc FullLocation = Result.Context->getFullLoc(Loc);
+  auto const File = FullLocation.getFileEntry();
+  if (nullptr == File)
+    return;
+
+  auto const filename{File->tryGetRealPathName()};
+  if (filename.find("color.hpp") != std::string::npos ||
+      filename.find("dontcare_t.hpp") != std::string::npos ||
+      filename.find("dormant_t.hpp") != std::string::npos ||
+      filename.find("exit_code.hpp") != std::string::npos ||
+      filename.find("in_place_t.hpp") != std::string::npos ||
+      filename.find("npos.hpp") != std::string::npos ||
+      filename.find("numeric_limits.hpp") != std::string::npos) {
+    return;
+  }
 
   if (isa<FunctionTemplateDecl>(ND) ||
       isa<CXXConstructorDecl>(ND) ||
@@ -80,6 +96,16 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (auto const * VD = dyn_cast<VarDecl>(ND)) {
+    auto const qualified_name{VD->getType().getUnqualifiedType().getAsString()};
+    if (qualified_name == "basic_errc_type<>")
+      return;
+
+    if (name == "endl" ||
+        name == "nullops" ||
+        name == "ptrops") {
+      return;
+    }
+
     if (VD->hasGlobalStorage() && VD->isConstexpr()) {
       if (!VD->isStaticLocal() && !VD->isStaticDataMember()) {
         if (!isUpperCase(name)) {

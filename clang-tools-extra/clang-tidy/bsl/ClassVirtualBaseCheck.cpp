@@ -28,9 +28,9 @@ void ClassVirtualBaseCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ClassVirtualBaseCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *D = Result.Nodes.getNodeAs<CXXRecordDecl>("class");
+  auto const *D = Result.Nodes.getNodeAs<CXXRecordDecl>("class");
 
-  const auto Loc = D->getBeginLoc();
+  auto const Loc = D->getBeginLoc();
   if (Loc.isInvalid())
     return;
 

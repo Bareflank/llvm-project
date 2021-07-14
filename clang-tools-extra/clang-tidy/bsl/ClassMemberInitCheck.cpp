@@ -33,14 +33,14 @@ AST_MATCHER(CXXConstructorDecl, isUserDefinedConcrete) {
 
 void ClassMemberInitCheck::checkCtorWithInit(const CXXConstructorDecl *Ctor)
 {
-  const auto Loc = Ctor->getBeginLoc();
-  const auto Parent = Ctor->getParent()->getCanonicalDecl();
+  auto const Loc = Ctor->getBeginLoc();
+  auto const Parent = Ctor->getParent()->getCanonicalDecl();
   auto NumFields = 0;
 
   if (nullptr == Parent)
     return;
 
-  for (const auto Field : Parent->fields()) {
+  for (auto const Field : Parent->fields()) {
     ++NumFields;
 
     if (!Field->hasInClassInitializer())
@@ -49,7 +49,7 @@ void ClassMemberInitCheck::checkCtorWithInit(const CXXConstructorDecl *Ctor)
     diag(Loc, "must use either in-class initializers for all fields"
         " or constructor initializers for all fields");
 
-    const auto Init = Field->getInClassInitializer();
+    auto const Init = Field->getInClassInitializer();
     if (nullptr != Init) {
       diag(Init->getBeginLoc(), "found in-class initializer here",
           DiagnosticIDs::Note);
@@ -60,7 +60,7 @@ void ClassMemberInitCheck::checkCtorWithInit(const CXXConstructorDecl *Ctor)
 
   auto NumMemberInits = 0;
 
-  for (const auto I : Ctor->inits()) {
+  for (auto const I : Ctor->inits()) {
     if (I->isMemberInitializer())
       ++NumMemberInits;
   }
@@ -71,9 +71,9 @@ void ClassMemberInitCheck::checkCtorWithInit(const CXXConstructorDecl *Ctor)
 
 void ClassMemberInitCheck::checkCtorWithoutInit(const CXXConstructorDecl *Ctor)
 {
-  const auto Parent = Ctor->getParent()->getCanonicalDecl();
+  auto const Parent = Ctor->getParent()->getCanonicalDecl();
 
-  for (const auto Field : Parent->fields()) {
+  for (auto const Field : Parent->fields()) {
     if (Field->hasInClassInitializer())
       continue;
 
@@ -99,13 +99,13 @@ void ClassMemberInitCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ClassMemberInitCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Init = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor-init");
+  auto const *Init = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor-init");
   if (Init) {
     checkCtorWithInit(Init);
     return;
   }
 
-  const auto *NoInit = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor-noinit");
+  auto const *NoInit = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor-noinit");
   if (NoInit) {
     checkCtorWithoutInit(NoInit);
     return;

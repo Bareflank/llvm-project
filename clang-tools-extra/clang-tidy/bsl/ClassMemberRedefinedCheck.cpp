@@ -47,8 +47,8 @@ bool ClassMemberRedefinedCheck::hasNoMemberWithName(const CXXRecordDecl *Base,
 {
   Base = Base->getCanonicalDecl();
 
-  for (const auto &D : Base->decls()) {
-    const auto ND = dyn_cast<NamedDecl>(D);
+  for (auto const &D : Base->decls()) {
+    auto const ND = dyn_cast<NamedDecl>(D);
     if (!ND)
       continue;
 
@@ -75,19 +75,19 @@ bool ClassMemberRedefinedCheck::hasNoMemberWithName(const CXXRecordDecl *Base,
 }
 
 void ClassMemberRedefinedCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *ND = Result.Nodes.getNodeAs<NamedDecl>("decl");
+  auto const *ND = Result.Nodes.getNodeAs<NamedDecl>("decl");
   if (!ND)
     return;
 
-  const auto Loc = ND->getBeginLoc();
+  auto const Loc = ND->getBeginLoc();
   if (Loc.isInvalid())
     return;
 
-  const auto Parent = dyn_cast<CXXRecordDecl>(ND->getDeclContext());
+  auto const Parent = dyn_cast<CXXRecordDecl>(ND->getDeclContext());
   if (!Parent)
     return;
 
-  const auto Name = ND->getName();
+  auto const Name = ND->getName();
 
   Parent->forallBases([this, Name](const CXXRecordDecl *B) {
     return hasNoMemberWithName(B, Name);

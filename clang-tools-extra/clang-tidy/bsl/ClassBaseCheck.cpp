@@ -59,14 +59,14 @@ bool ClassBaseCheck::isInterfaceClass(const CXXRecordDecl *Base)
   if (Base->hasDirectFields())
     return false;
 
-  for (const auto &D : Base->decls()) {
-    const auto M = dyn_cast<CXXMethodDecl>(D);
+  for (auto const &D : Base->decls()) {
+    auto const M = dyn_cast<CXXMethodDecl>(D);
     if (M) {
       if (!isInterfaceMethod(M))
         return false;
     }
 
-    const auto V = dyn_cast<VarDecl>(D);
+    auto const V = dyn_cast<VarDecl>(D);
     if (V) {
       if (!isInterfaceVar(V))
         return false;
@@ -91,9 +91,9 @@ void ClassBaseCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ClassBaseCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *RD = Result.Nodes.getNodeAs<CXXRecordDecl>("record");
+  auto const *RD = Result.Nodes.getNodeAs<CXXRecordDecl>("record");
 
-  const auto Loc = RD->getBeginLoc();
+  auto const Loc = RD->getBeginLoc();
   if (Loc.isInvalid())
     return;
 

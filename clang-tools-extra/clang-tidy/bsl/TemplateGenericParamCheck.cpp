@@ -49,13 +49,13 @@ void TemplateGenericParamCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void TemplateGenericParamCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *ParmVar = Result.Nodes.getNodeAs<ParmVarDecl>("parm-var");
-  const auto *TypeParmDecl =
+  auto const *ParmVar = Result.Nodes.getNodeAs<ParmVarDecl>("parm-var");
+  auto const *TypeParmDecl =
       Result.Nodes.getNodeAs<TemplateTypeParmDecl>("type-parm-decl");
 
   // Get the FunctionDecl and FunctionTemplateDecl containing the function
   // parameter.
-  const auto *FuncForParam = dyn_cast<FunctionDecl>(ParmVar->getDeclContext());
+  auto const *FuncForParam = dyn_cast<FunctionDecl>(ParmVar->getDeclContext());
   if (!FuncForParam)
     return;
   const FunctionTemplateDecl *FuncTemplate =
@@ -70,7 +70,7 @@ void TemplateGenericParamCheck::check(const MatchFinder::MatchResult &Result) {
   if (!llvm::is_contained(*Params, TypeParmDecl))
     return;
 
-  const auto *Ctor = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
+  auto const *Ctor = Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
   if (Ctor) {
     // Every parameter after the first must have a default value.
     for (auto Iter = Ctor->param_begin() + 1; Iter != Ctor->param_end(); ++Iter) {
@@ -83,7 +83,7 @@ void TemplateGenericParamCheck::check(const MatchFinder::MatchResult &Result) {
     }
   }
 
-  const auto *CopyAssignOp = Result.Nodes.getNodeAs<CXXMethodDecl>("copy-assign");
+  auto const *CopyAssignOp = Result.Nodes.getNodeAs<CXXMethodDecl>("copy-assign");
   if (CopyAssignOp) {
     for (auto Iter = CopyAssignOp->param_begin() + 1; Iter != CopyAssignOp->param_end(); ++Iter) {
       if (!(*Iter)->hasDefaultArg())

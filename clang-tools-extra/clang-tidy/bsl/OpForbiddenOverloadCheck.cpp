@@ -17,7 +17,7 @@ namespace tidy {
 namespace bsl {
 
 AST_MATCHER(FunctionDecl, isInstanceMethod) {
-  const auto MD = dyn_cast<CXXMethodDecl>(&Node);
+  auto const MD = dyn_cast<CXXMethodDecl>(&Node);
   return MD && MD->isInstance();
 }
 
@@ -41,38 +41,38 @@ void OpForbiddenOverloadCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void OpForbiddenOverloadCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto Call = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("op-call");
+  auto const Call = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("op-call");
 
   if (Call) {
-    const auto Loc = Call->getOperatorLoc();
+    auto const Loc = Call->getOperatorLoc();
     if (Loc.isInvalid())
       return;
 
-    const auto Str = getOperatorSpelling(Call->getOperator());
+    auto const Str = getOperatorSpelling(Call->getOperator());
     diag(Loc, "overloaded operator%0 is forbidden") << Str;
 
     return;
   }
 
-  const auto FD = Result.Nodes.getNodeAs<FunctionDecl>("op-decl-non-instance");
+  auto const FD = Result.Nodes.getNodeAs<FunctionDecl>("op-decl-non-instance");
   if (FD) {
-    const auto CFD = FD->getCanonicalDecl();
+    auto const CFD = FD->getCanonicalDecl();
     if (CFD->getSourceRange().isInvalid())
         return;
 
-    const auto Loc = CFD->getSourceRange().getBegin();
+    auto const Loc = CFD->getSourceRange().getBegin();
     diag(Loc, "overloaded address-of operator is forbidden");
 
     return;
   }
 
-  const auto MD = Result.Nodes.getNodeAs<CXXMethodDecl>("op-decl-instance");
+  auto const MD = Result.Nodes.getNodeAs<CXXMethodDecl>("op-decl-instance");
   if (MD) {
-    const auto CMD = MD->getCanonicalDecl();
+    auto const CMD = MD->getCanonicalDecl();
     if (CMD->getSourceRange().isInvalid())
       return;
 
-    const auto Loc = CMD->getSourceRange().getBegin();
+    auto const Loc = CMD->getSourceRange().getBegin();
     diag(Loc, "overloaded address-of operator is forbidden");
 
     return;

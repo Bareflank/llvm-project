@@ -27,8 +27,8 @@ void OpMixedIncrementDecrementCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void OpMixedIncrementDecrementCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Op = Result.Nodes.getNodeAs<UnaryOperator>("op");
-  const auto Loc = Op->getOperatorLoc();
+  auto const *Op = Result.Nodes.getNodeAs<UnaryOperator>("op");
+  auto const Loc = Op->getOperatorLoc();
 
   if (Loc.isInvalid())
     return;

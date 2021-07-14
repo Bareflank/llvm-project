@@ -25,7 +25,7 @@ void ForLoopCounterCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ForLoopCounterCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *ForIncSingle = Result.Nodes.getNodeAs<ForStmt>("singlecounter");
+  auto const *ForIncSingle = Result.Nodes.getNodeAs<ForStmt>("singlecounter");
 
   if (ForIncSingle) {
       auto LocS = ForIncSingle->getInc()->getExprLoc();
@@ -35,7 +35,7 @@ void ForLoopCounterCheck::check(const MatchFinder::MatchResult &Result) {
       diag(LocS, "for loop must have single loop-counter");
   }
 
-  const auto *FloatEx = Result.Nodes.getNodeAs<Expr>("floatlit");
+  auto const *FloatEx = Result.Nodes.getNodeAs<Expr>("floatlit");
   if (FloatEx) {
     auto LocF = FloatEx->getExprLoc();
     if (LocF.isInvalid() || LocF.isMacroID())
@@ -44,7 +44,7 @@ void ForLoopCounterCheck::check(const MatchFinder::MatchResult &Result) {
     diag(LocF, "float type not allowed (literal)");
   }
 
-  const auto *FloatVar = Result.Nodes.getNodeAs<VarDecl>("floatvar");
+  auto const *FloatVar = Result.Nodes.getNodeAs<VarDecl>("floatvar");
   if (FloatVar) {
       auto LocFV = FloatVar->getBeginLoc();
       if (LocFV.isInvalid() || LocFV.isMacroID())

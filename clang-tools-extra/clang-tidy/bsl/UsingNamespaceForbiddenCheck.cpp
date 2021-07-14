@@ -28,8 +28,8 @@ void UsingNamespaceForbiddenCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void UsingNamespaceForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *D = Result.Nodes.getNodeAs<UsingDirectiveDecl>("decl");
-  const auto Loc = D->getUsingLoc();
+  auto const *D = Result.Nodes.getNodeAs<UsingDirectiveDecl>("decl");
+  auto const Loc = D->getUsingLoc();
 
   if (Loc.isInvalid())
     return;
