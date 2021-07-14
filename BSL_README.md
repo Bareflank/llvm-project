@@ -21,7 +21,7 @@ To compile the LLVM on for CI run the following:
 ```bash
 git clone https://github.com/bareflank/llvm-project
 mkdir llvm-project-build && cd llvm-project-build
-cmake ../llvm-project/llvm -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;compiler-rt" -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_DOCS=OFF -DCMAKE_INSTALL_PREFIX=/usr/lib/llvm-bareflank -DLLVM_INSTALL_TOOLCHAIN_ONLY=ON -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON
+cmake ../llvm-project/llvm -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld" -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_DOCS=OFF -DCMAKE_INSTALL_PREFIX=/usr/lib/llvm-bareflank -DLLVM_INSTALL_TOOLCHAIN_ONLY=ON -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON
 make -j<number of cores>
 ```
 
@@ -31,11 +31,8 @@ packaging up what was installed as follows:
 ```
 sudo rm -Rf /usr/lib/llvm-bareflank
 sudo make install
-sudo rm -R /usr/lib/llvm-bareflank
-cp -R /usr/lib/llvm-bareflank .
+cp -Rf /usr/lib/llvm-bareflank .
 tar -czvf llvm-bareflank.tar.gz llvm-bareflank
-cp llvm-bareflank.tar.gz ../bsl/utils/linux/llvm-bareflank.tar.gz
-cp llvm-bareflank.tar.gz ../hypervisor/utils/linux/llvm-bareflank.tar.gz
 ```
 
 Then copy the resulting tarball to the <repo>/utils/linux folder. This will get
