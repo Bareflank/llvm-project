@@ -236,9 +236,25 @@ void VerifyConstCheck::check_var_decl(const MatchFinder::MatchResult &Result) {
     return;
 
   if (QT->isPointerType()) {
+    if (getRawTokenIdentifierStr(VD->getBeginLoc(), Result) == "const") {
+      diag(Loc, "the const qualifier for the pointee to the pointer type %0 for variable %1 must be on the right of the type, not the left") << QT << VD;
+      return;
+    }
+  }
+  else {
+    if (getRawTokenIdentifierStr(VD->getBeginLoc(), Result) == "const") {
+      diag(Loc, "the const qualifier for variable %0 must be on the right of the type, not the left") << VD;
+      return;
+    }
+  }
+
+  if (QT->isPointerType()) {
     if (QT->getPointeeType().isConstQualified()) {
-      if (getRawTokenIdentifierStr(VD->getBeginLoc(), Result) == "const")
-        diag(Loc, "the const qualifier for the pointee to the pointer type %0 for variable %1 must be on the right of the type, not the left") << QT << VD;
+      if (name.startswith("pmut_")) {
+          diag(Loc, "the pointee to the pointer type %0 for variable %1 cannot be marked as const or the variable's name must start with "
+                    "cst_, mut_, udm_, pcst_cst_, pcst_mut_, pcst_udm_, pudm_cst_, pudm_mut_ or pudm_udm_") << QT << VD;
+        return;
+      }
     }
     else {
       if (!name.startswith("pmut_") &&
@@ -249,15 +265,49 @@ void VerifyConstCheck::check_var_decl(const MatchFinder::MatchResult &Result) {
       }
     }
 
-    if (!QT.isConstQualified()) {
-      if (!VD->getName().startswith("mut_") && !VD->getName().startswith("pmut_mut_"))
-        diag(Loc, "the pointer to the pointer type %0 for variable %1 must be marked as const or the variable's name must start with mut_ or pmut_mut_") << QT << VD;
+    if (QT.isConstQualified()) {
+      if (name.startswith("mut_") ||
+          name.startswith("pcst_mut_") ||
+          name.startswith("pmut_mut_") ||
+          name.startswith("pudm_mut_")) {
+        diag(Loc, "the variable %0 of type %1 canont be marked as const or the variable's name must start with "
+                    "cst_, udm_, pcst_cst_, pcst_udm_, pmut_cst_, pmut_udm_, pudm_cst_ or pudm_udm_") << VD << QT;
+        return;
+      }
+    }
+    else {
+      if (!name.startswith("mut_") &&
+          !name.startswith("udm_") &&
+          !name.startswith("pcst_mut_") &&
+          !name.startswith("pcst_udm_") &&
+          !name.startswith("pmut_mut_") &&
+          !name.startswith("pmut_udm_") &&
+          !name.startswith("pudm_mut_") &&
+          !name.startswith("pudm_udm_")) {
+        diag(Loc, "the variable %0 of type %1 must be marked as const or the variable's name must start with "
+                    "mut_, udm_, pcst_mut_, pcst_udm_, pmut_mut_, pmut_udm_, pudm_mut_ or pudm_udm_") << VD << QT;
+        return;
+      }
     }
   }
   else {
+    if (name.startswith("pcst_cst_") ||
+        name.startswith("pcst_mut_") ||
+        name.startswith("pcst_udm_") ||
+        name.startswith("pmut_cst_") ||
+        name.startswith("pmut_mut_") ||
+        name.startswith("pmut_udm_") ||
+        name.startswith("pudm_cst_") ||
+        name.startswith("pudm_mut_")) {
+      diag(Loc, "the variable %0 has a pointer-only suffix which is not allowed for non-pointer types") << VD;
+      return;
+    }
+
     if (QT.isConstQualified()) {
-      if (getRawTokenIdentifierStr(VD->getBeginLoc(), Result) == "const")
-        diag(Loc, "the const qualifier for variable %0 must be on the right of the type, not the left") << VD;
+      if (name.startswith("mut_")) {
+        diag(Loc, "the variable %0 of type %1 canont be marked as const if it starts with mut_") << VD << QT;
+        return;
+      }
     }
     else {
       if (!name.startswith("mut_") && !name.startswith("udm_") && !name.startswith("pudm_udm_")) {
