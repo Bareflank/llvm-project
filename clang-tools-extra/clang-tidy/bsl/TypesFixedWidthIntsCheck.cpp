@@ -36,7 +36,9 @@ void TypesFixedWidthIntsCheck::check(const MatchFinder::MatchResult &Result) {
 
   // These have to have non-fixed width types to work at all
   auto const filename{File->tryGetRealPathName()};
-  if (filename.find("char_type.hpp") != std::string::npos ||
+  if (filename.find(".h") != std::string::npos ||
+      filename.find("carray.hpp") != std::string::npos ||
+      filename.find("char_type.hpp") != std::string::npos ||
       filename.find("cstdint.hpp") != std::string::npos) {
     return;
   }

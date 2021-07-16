@@ -40,6 +40,9 @@ void EmptyIfElseCheck::check(const MatchFinder::MatchResult &Result) {
     if (Loc.isInvalid())
       return;
 
+    if (stmtContainsErrors(IfThen, Result))
+      return;
+
     if (IfThen->children().empty()) {
       diag(Loc, "Empty 'if' statements are forbidden");
     }
@@ -48,6 +51,9 @@ void EmptyIfElseCheck::check(const MatchFinder::MatchResult &Result) {
   if (auto const IfElse = IS->getElse()) {
     auto const Loc = IS->getElseLoc();
     if (Loc.isInvalid())
+      return;
+
+    if (stmtContainsErrors(IfElse, Result))
       return;
 
     if (IfElse->children().empty()) {

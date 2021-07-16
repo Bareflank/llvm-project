@@ -35,7 +35,12 @@ void LeftSideConstantsCheck::check(const MatchFinder::MatchResult &Result) {
     return;
 
   auto const LHS = BO->getLHS();
+  if (LHS->isValueDependent())
+    return;
+
   auto const RHS = BO->getRHS();
+  if (RHS->isValueDependent())
+    return;
 
   if (!LHS->isIntegerConstantExpr(*Result.Context)) {
     if (RHS->isIntegerConstantExpr(*Result.Context)) {

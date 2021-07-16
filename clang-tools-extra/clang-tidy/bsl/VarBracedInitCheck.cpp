@@ -58,6 +58,15 @@ void VarBracedInitCheck::check(const MatchFinder::MatchResult &Result) {
   if (Loc.isInvalid())
     return;
 
+  FullSourceLoc FullLocation = Result.Context->getFullLoc(Loc);
+  auto const File = FullLocation.getFileEntry();
+  if (nullptr == File)
+    return;
+
+  auto const filename{File->tryGetRealPathName()};
+  if (filename.find(".h") != std::string::npos)
+    return;
+
   diag(Loc, "variable '%0' is not initialized via direct list initialization") << VD;
 }
 

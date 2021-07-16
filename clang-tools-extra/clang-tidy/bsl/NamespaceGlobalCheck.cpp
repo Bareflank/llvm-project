@@ -32,12 +32,13 @@ void NamespaceGlobalCheck::registerMatchers(MatchFinder *Finder) {
                    hasName("operator\"\"_u16"),
                    hasName("operator\"\"_u32"),
                    hasName("operator\"\"_u64"),
-                   hasName("operator\"\"_umax"),
+                   hasName("operator\"\"_umx"),
                    hasName("operator\"\"_i8"),
                    hasName("operator\"\"_i16"),
                    hasName("operator\"\"_i32"),
                    hasName("operator\"\"_i64"),
-                   hasName("operator\"\"_imax")
+                   hasName("operator\"\"_imx"),
+                   hasName("operator\"\"_idx")
                )),
                namespaceDecl(),
                linkageSpecDecl(isExternC())
@@ -51,6 +52,15 @@ void NamespaceGlobalCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto const Loc = GlobalDecl->getLocation();
   if (Loc.isInvalid())
+    return;
+
+  FullSourceLoc FullLocation = Result.Context->getFullLoc(Loc);
+  auto const File = FullLocation.getFileEntry();
+  if (nullptr == File)
+    return;
+
+  auto const filename{File->tryGetRealPathName()};
+  if (filename.find(".h") != std::string::npos)
     return;
 
   diag(Loc, "only main, operator new/delete, namespaces, and extern \"C\" "

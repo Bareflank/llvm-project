@@ -102,7 +102,8 @@ void StructDefCheck::check(const MatchFinder::MatchResult &Result) {
 
     // integral_constant cannot be marked final to work
     auto const filename{File->tryGetRealPathName()};
-    if (filename.find("integral_constant.hpp") != std::string::npos) {
+    if (filename.find(".h") != std::string::npos ||
+        filename.find("integral_constant.hpp") != std::string::npos) {
       return;
     }
 

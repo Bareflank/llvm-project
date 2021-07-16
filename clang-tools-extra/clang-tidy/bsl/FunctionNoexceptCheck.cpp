@@ -28,6 +28,9 @@ void FunctionNoexceptCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void FunctionNoexceptCheck::check(const MatchFinder::MatchResult &Result) {
+  if (!Result.Context->getLangOpts().CPlusPlus)
+    return;
+
   auto const *FD = Result.Nodes.getNodeAs<FunctionDecl>("decl");
   if (nullptr == FD)
     return;

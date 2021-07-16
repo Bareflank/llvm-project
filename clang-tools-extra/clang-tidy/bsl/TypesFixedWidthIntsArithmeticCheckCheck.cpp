@@ -27,6 +27,9 @@ void TypesFixedWidthIntsArithmeticCheckCheck::registerMatchers(MatchFinder *Find
 }
 
 void TypesFixedWidthIntsArithmeticCheckCheck::check(const MatchFinder::MatchResult &Result) {
+  if (!Result.Context->getLangOpts().CPlusPlus)
+    return;
+
   auto Op = Result.Nodes.getNodeAs<BinaryOperator>("op");
   auto Loc = Op->getOperatorLoc();
 
@@ -40,8 +43,9 @@ void TypesFixedWidthIntsArithmeticCheckCheck::check(const MatchFinder::MatchResu
 
   // These have to have non-fixed width types to work at all
   auto const filename{File->tryGetRealPathName()};
-  if (filename.find("basic_errc_type.hpp") != std::string::npos ||
-      filename.find("convert.hpp") != std::string::npos ||
+  if (filename.find(".h") != std::string::npos ||
+      filename.find("basic_errc_type.hpp") != std::string::npos ||
+      filename.find("carray.hpp") != std::string::npos ||
       filename.find("convert.hpp") != std::string::npos ||
       filename.find("debug.hpp") != std::string::npos ||
       filename.find("extent_base.hpp") != std::string::npos ||

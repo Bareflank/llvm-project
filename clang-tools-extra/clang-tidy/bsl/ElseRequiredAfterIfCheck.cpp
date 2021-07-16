@@ -24,7 +24,8 @@ void ElseRequiredAfterIfCheck::registerMatchers(MatchFinder *Finder) {
       anyOf(
         returnStmt(),
         continueStmt(),
-        breakStmt()
+        breakStmt(),
+        gotoStmt()
       )
     );
 

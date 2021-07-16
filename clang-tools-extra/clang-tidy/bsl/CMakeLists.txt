@@ -60,7 +60,6 @@ add_clang_library(clangTidyBslModule
   StmtSwitchDefaultBreakCheck.cpp
   StmtSwitchDefaultLastCheck.cpp
   StructDefCheck.cpp
-  TemplateGenericParamCheck.cpp
   TernaryOperatorForbiddenCheck.cpp
   TypesFixedWidthIntsArithmeticCheckCheck.cpp
   TypesFixedWidthIntsCheck.cpp

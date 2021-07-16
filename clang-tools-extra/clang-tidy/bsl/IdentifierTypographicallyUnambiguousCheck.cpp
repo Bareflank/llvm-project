@@ -271,7 +271,8 @@ void IdentifierTypographicallyUnambiguousCheck::check(const MatchFinder::MatchRe
 {
   auto const *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
 
-  if (isa<NamespaceDecl>(D) ||
+  if (isa<FieldDecl>(D) ||
+      isa<NamespaceDecl>(D) ||
       isa<UsingDirectiveDecl>(D) ||
       isa<CXXConstructorDecl>(D) ||
       isa<CXXDestructorDecl>(D) ||
@@ -322,6 +323,12 @@ void IdentifierTypographicallyUnambiguousCheck::check(const MatchFinder::MatchRe
       return;
   }
 
+  if (auto const *RD{dyn_cast<RecordDecl>(D)}) {
+    // Ignore prototypes
+    if (RD->getDefinition() != RD)
+      return;
+  }
+
   // Ignore template types that do not have a parent.
   if (isa<TemplateTypeParmDecl>(D) ||
       isa<NonTypeTemplateParmDecl>(D) ||
@@ -335,6 +342,9 @@ void IdentifierTypographicallyUnambiguousCheck::check(const MatchFinder::MatchRe
 
   if (auto const *VD{dyn_cast<VarDecl>(D)}) {
     if (VD->isStaticDataMember() && VD == VD->getDefinition())
+      return;
+
+    if (VD->hasExternalFormalLinkage())
       return;
   }
 
@@ -373,6 +383,16 @@ void IdentifierTypographicallyUnambiguousCheck::check(const MatchFinder::MatchRe
       // Ignore names in different blocks
       if (areContainedInDifferentBlocks(D, r.D))
         continue;
+
+      if (isa<ParmVarDecl>(D)) {
+        if (isa<FieldDecl>(r.D))
+          continue;
+      }
+
+      if (isa<ParmVarDecl>(r.D)) {
+        if (isa<FieldDecl>(D))
+          continue;
+      }
 
       diag(D->getLocation(), "Different identifiers shall be typographically unambiguous");
       diag(r.D->getLocation(), "previous identifier found here", DiagnosticIDs::Note);
