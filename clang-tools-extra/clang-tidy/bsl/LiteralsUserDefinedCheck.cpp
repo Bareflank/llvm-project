@@ -36,12 +36,13 @@ void LiteralsUserDefinedCheck::check(const MatchFinder::MatchResult &Result) {
       suffix->getName() == "_u16" ||
       suffix->getName() == "_u32" ||
       suffix->getName() == "_u64" ||
-      suffix->getName() == "_umax" ||
+      suffix->getName() == "_umx" ||
       suffix->getName() == "_i8" ||
       suffix->getName() == "_i16" ||
       suffix->getName() == "_i32" ||
       suffix->getName() == "_i64" ||
-      suffix->getName() == "_imax")
+      suffix->getName() == "_imx" ||
+      suffix->getName() == "_idx")
   {
     return;
   }

@@ -23,7 +23,10 @@ void VerifyConstCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
     varDecl(
       unless(
-        isImplicit()
+        anyOf(
+          isImplicit(),
+          hasName("dontcare")
+        )
       )
     ).bind("var-decl"),
   this);
@@ -58,6 +61,9 @@ void VerifyConstCheck::check_var_decl(const MatchFinder::MatchResult &Result) {
     return;
 
   if (VD->isInvalidDecl())
+    return;
+
+  if (VD->isFunctionOrMethodVarDecl())
     return;
 
   auto name = VD->getName();

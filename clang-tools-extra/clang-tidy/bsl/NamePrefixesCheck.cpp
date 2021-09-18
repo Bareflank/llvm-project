@@ -22,7 +22,8 @@ void NamePrefixesCheck::registerMatchers(MatchFinder *Finder) {
       unless(
         anyOf(
           isImplicit(),
-          isExpansionInSystemHeader()
+          isExpansionInSystemHeader(),
+          hasName("dontcare")
         )
       )
     ).bind("decl"),
@@ -60,10 +61,12 @@ void NamePrefixesCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (auto const *FD = dyn_cast<FieldDecl>(DD)) {
     // Ignore structs
-    if (auto const *CXXRD = dyn_cast<CXXRecordDecl>(FD->getParent())) {
-      if (CXXRD->isStruct()) {
+    if (auto const *TD = dyn_cast<TagDecl>(FD->getParent())) {
+      if (TD->isStruct())
         return;
-      }
+
+      if (TD->isUnion())
+        return;
     }
 
     if (!name.startswith("m_")) {

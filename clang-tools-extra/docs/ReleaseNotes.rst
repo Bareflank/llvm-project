@@ -507,13 +507,6 @@ New checks
   special member functions or methods, and is not a base or inherits from
   another struct or class
 
-- New :doc:`bsl-template-generic-param
-  <clang-tidy/checks/bsl-template-generic-param>` check.
-
-  Checks that a copy constructor/assignment operator is declared when there is a
-  template constructor/assignment operator (respectively) with a single parameter
-  that is a generic parameter.
-
 - New :doc:`bsl-ternary-operator-forbidden
   <clang-tidy/checks/bsl-ternary-operator-forbidden>` check.
 

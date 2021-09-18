@@ -6,6 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "IsDefinedInATestFile.h"
+
 #include "BooleanOperatorsForbiddenCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
@@ -25,6 +27,9 @@ void BooleanOperatorsForbiddenCheck::check(const MatchFinder::MatchResult &Resul
   auto const Loc = Op->getOperatorLoc();
 
   if (Loc.isInvalid())
+    return;
+
+  if (isDefinedInATestFile(Result.Context, Loc))
     return;
 
   diag(Loc, "boolean operators && and || are forbidden");

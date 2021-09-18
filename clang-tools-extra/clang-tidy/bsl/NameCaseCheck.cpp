@@ -70,6 +70,7 @@ void NameCaseCheck::check(const MatchFinder::MatchResult &Result) {
   if (filename.find("color.hpp") != std::string::npos ||
       filename.find("dontcare_t.hpp") != std::string::npos ||
       filename.find("dormant_t.hpp") != std::string::npos ||
+      filename.find("errc_type.hpp") != std::string::npos ||
       filename.find("exit_code.hpp") != std::string::npos ||
       filename.find("in_place_t.hpp") != std::string::npos ||
       filename.find("npos.hpp") != std::string::npos ||

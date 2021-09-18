@@ -6,10 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "IsDefinedInATestFile.h"
+
 #include "LambdaImplicitCaptureCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "IsDefinedInATestFile.h"
 
 using namespace clang::ast_matchers;
 
@@ -24,11 +25,11 @@ void LambdaImplicitCaptureCheck::registerMatchers(MatchFinder *Finder) {
 void LambdaImplicitCaptureCheck::check(const MatchFinder::MatchResult &Result) {
   auto Lambda = Result.Nodes.getNodeAs<LambdaExpr>("lambda");
 
-  auto CaptureLoc = Lambda->getIntroducerRange();
-  if (CaptureLoc.isInvalid())
+  if (isDefinedInATestFile(Result.Context, Lambda->getBeginLoc()))
     return;
 
-  if (isDefinedInATestFile(Result.Context, Lambda->getBeginLoc()))
+  auto CaptureLoc = Lambda->getIntroducerRange();
+  if (CaptureLoc.isInvalid())
     return;
 
   auto Begin = CaptureLoc.getBegin();

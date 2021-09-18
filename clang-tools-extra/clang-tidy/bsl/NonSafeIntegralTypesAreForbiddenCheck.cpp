@@ -22,12 +22,21 @@ void NonSafeIntegralTypesAreForbiddenCheck::registerMatchers(MatchFinder *Finder
 }
 
 void NonSafeIntegralTypesAreForbiddenCheck::check_var_decl(const MatchFinder::MatchResult &Result) {
+  if (!Result.Context->getLangOpts().CPlusPlus)
+    return;
+
   auto const *VD = Result.Nodes.getNodeAs<VarDecl>("var-decl");
   if (nullptr == VD)
     return;
 
   auto const Loc = VD->getBeginLoc();
   if (Loc.isInvalid())
+    return;
+
+  if (VD->isExternC())
+    return;
+
+  if (VD->hasExternalFormalLinkage())
     return;
 
   auto const QT = VD->getType().getNonReferenceType().getCanonicalType().getUnqualifiedType();
@@ -39,6 +48,9 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_var_decl(const MatchFinder::Ma
 
   auto const name{QT.getAsString()};
   auto const qualified_name{VD->getType().getUnqualifiedType().getAsString()};
+
+  if (qualified_name.find("enum ") != std::string::npos)
+    return;
 
   if (name == "char")
     return;
@@ -55,7 +67,7 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_var_decl(const MatchFinder::Ma
         return;
 
       if (FD->getNameAsString() == "main")
-          return;
+        return;
     }
   }
 
@@ -65,23 +77,27 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_var_decl(const MatchFinder::Ma
     return;
 
   auto const filename{File->tryGetRealPathName()};
-  if (filename.find("add_lvalue_reference.hpp") != std::string::npos ||
+  if (filename.find(".h") != std::string::npos ||
+      filename.find("add_lvalue_reference.hpp") != std::string::npos ||
       filename.find("add_pointer.hpp") != std::string::npos ||
       filename.find("add_rvalue_reference.hpp") != std::string::npos ||
       filename.find("aligned_union.hpp") != std::string::npos ||
       filename.find("alignment_of.hpp") != std::string::npos ||
       filename.find("basic_errc_type.hpp") != std::string::npos ||
+      filename.find("carray.hpp") != std::string::npos ||
       filename.find("char_traits.hpp") != std::string::npos ||
       filename.find("construct_at.hpp") != std::string::npos ||
       filename.find("convert.hpp") != std::string::npos ||
       filename.find("cstdint.hpp") != std::string::npos ||
       filename.find("debug.hpp") != std::string::npos ||
+      filename.find("debug_levels.hpp") != std::string::npos ||
       filename.find("discard.hpp") != std::string::npos ||
       filename.find("exit_code.hpp") != std::string::npos ||
       filename.find("extent_base.hpp") != std::string::npos ||
       filename.find("forward.hpp") != std::string::npos ||
       filename.find("fmt.hpp") != std::string::npos ||
       filename.find("fmt_impl_integral.hpp") != std::string::npos ||
+      filename.find("integer.hpp") != std::string::npos ||
       filename.find("integer_sequence.hpp") != std::string::npos ||
       filename.find("integer_sequence_max.hpp") != std::string::npos ||
       filename.find("integer_sequence_min.hpp") != std::string::npos ||
@@ -91,6 +107,7 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_var_decl(const MatchFinder::Ma
       filename.find("move.hpp") != std::string::npos ||
       filename.find("numeric_limits.hpp") != std::string::npos ||
       filename.find("rank.hpp") != std::string::npos ||
+      filename.find("safe_idx.hpp") != std::string::npos ||
       filename.find("safe_integral.hpp") != std::string::npos ||
       filename.find("source_location.hpp") != std::string::npos ||
       filename.find("swap.hpp") != std::string::npos) {
@@ -98,7 +115,7 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_var_decl(const MatchFinder::Ma
   }
 
   diag(Loc, "integral types like int, std::int32_t and bsl::int32 are forbidden. "
-            "Use bsl::safe_integral instead of %0") << qualified_name;
+            "Use bsl::safe_integral instead of '%0'") << qualified_name;
 }
 
 void NonSafeIntegralTypesAreForbiddenCheck::check_field_decl(const MatchFinder::MatchResult &Result) {
@@ -127,6 +144,9 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_field_decl(const MatchFinder::
   auto const name{QT.getAsString()};
   auto const qualified_name{FD->getType().getUnqualifiedType().getAsString()};
 
+  if (qualified_name.find("enum ") != std::string::npos)
+    return;
+
   if (name == "char")
     return;
 
@@ -145,6 +165,7 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_field_decl(const MatchFinder::
   auto const filename{File->tryGetRealPathName()};
   if (filename.find("basic_errc_type.hpp") != std::string::npos ||
       filename.find("fmt.hpp") != std::string::npos ||
+      filename.find("safe_idx.hpp") != std::string::npos ||
       filename.find("safe_integral.hpp") != std::string::npos ||
       filename.find("source_location.hpp") != std::string::npos ||
       filename.find("span.hpp") != std::string::npos) {
@@ -152,7 +173,7 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_field_decl(const MatchFinder::
   }
 
   diag(Loc, "integral types like int, std::int32_t and bsl::int32 are forbidden. "
-            "Use bsl::safe_integral instead of %0") << qualified_name;
+            "Use bsl::safe_integral instead of '%0'") << qualified_name;
 }
 
 void NonSafeIntegralTypesAreForbiddenCheck::check(const MatchFinder::MatchResult &Result) {

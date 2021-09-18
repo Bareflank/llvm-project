@@ -42,23 +42,36 @@ void DestructorAccessSpecifierCheck::registerMatchers(MatchFinder *Finder) {
     this);
 }
 
-void DestructorAccessSpecifierCheck::check(
-    const MatchFinder::MatchResult &Result) {
-  auto const *MatchedDecl =
-      Result.Nodes.getNodeAs<CXXDestructorDecl>("destructor");
-  if (MatchedDecl) {
-    auto Loc = MatchedDecl->getLocation();
+void DestructorAccessSpecifierCheck::check(const MatchFinder::MatchResult &Result) {
+  auto const *MD = Result.Nodes.getNodeAs<CXXDestructorDecl>("destructor");
+  if (MD->isInvalidDecl())
+    return;
 
-    auto const Parent = MatchedDecl->getParent();
-    if (Parent->isLambda() || (MatchedDecl->getAccess() == AS_public &&
-                               Parent->isEffectivelyFinal())) {
+  auto const Loc = MD->getLocation();
+  if (Loc.isInvalid())
+    return;
+
+  FullSourceLoc FullLocation = Result.Context->getFullLoc(Loc);
+  auto const File = FullLocation.getFileEntry();
+  if (nullptr == File)
+    return;
+
+  auto const filename{File->tryGetRealPathName()};
+  if (filename.find(".h") != std::string::npos)
+    return;
+
+  auto const Parent = MD->getParent();
+  if (!Parent->isInvalidDecl()) {
+    if (Parent->isLambda())
       return;
-    }
 
-    diag(Loc, "base class destructor must be public virtual, public override, "
-              "or protected non-virtual. If public destructor is nonvirtual, "
-              "then class must be declared final.");
+    if (MD->getAccess() == AS_public && Parent->isEffectivelyFinal())
+      return;
   }
+
+  diag(Loc, "base class destructor must be public virtual, public override, "
+            "or protected non-virtual. If public destructor is nonvirtual, "
+            "then class must be declared final.");
 }
 
 } // namespace bsl

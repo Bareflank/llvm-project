@@ -42,6 +42,7 @@ void UserDefinedTypeNamesMatchHeaderNameCheck::check(const MatchFinder::MatchRes
   if (isa<NamespaceDecl>(D) ||
       isa<FunctionDecl>(D) ||
       isa<FunctionTemplateDecl>(D) ||
+      isa<TypedefDecl>(D) ||
       isa<TypeAliasDecl>(D) ||
       isa<VarDecl>(D) ||
       isa<VarTemplateDecl>(D) ||
@@ -64,8 +65,8 @@ void UserDefinedTypeNamesMatchHeaderNameCheck::check(const MatchFinder::MatchRes
       return;
   }
 
-  if (auto const *CXXRD{dyn_cast<CXXRecordDecl>(D)}) {
-    if (CXXRD->getDefinition() != CXXRD)
+  if (auto const *RD{dyn_cast<RecordDecl>(D)}) {
+    if (RD->getDefinition() != RD)
       return;
   }
 
@@ -81,8 +82,9 @@ void UserDefinedTypeNamesMatchHeaderNameCheck::check(const MatchFinder::MatchRes
   const size_t period_idx = filename.rfind('.');
   if (std::string::npos != period_idx)
   {
-      if (filename.substr(period_idx) != ".hpp") {
-        diag(D->getBeginLoc(), "All declarations must be made in header files that end in .hpp");
+      if (filename.substr(period_idx) != ".hpp" &&
+          filename.substr(period_idx) != ".h") {
+        diag(D->getBeginLoc(), "All declarations must be made in header files that end in .hpp/.h");
         return;
       }
 

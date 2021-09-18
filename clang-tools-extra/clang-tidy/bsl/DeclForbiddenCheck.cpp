@@ -6,6 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "IsDefinedInATestFile.h"
+
 #include "DeclForbiddenCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
@@ -28,6 +30,9 @@ void DeclForbiddenCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto const Loc = D->getBeginLoc();
   if (Loc.isInvalid())
+    return;
+
+  if (isDefinedInATestFile(Result.Context, Loc))
     return;
 
   auto const Tag = dyn_cast<TagDecl>(D);

@@ -289,6 +289,9 @@ void DocumentationCheck::check(const MatchFinder::MatchResult &Result) {
     if (VD->getNameAsString() == "")
       return;
 
+    if (VD->hasExternalFormalLinkage())
+      return;
+
     if (!hasABrief(Context, VD)) {
       diag(VD->getLocation(), "Variable %0 is missing documentation. Are you missing the '@brief' command?") << VD;
     }

@@ -65,7 +65,9 @@ void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Re
     if (isa<StringLiteral>(ICE->getSubExpr()))
       return;
 
-    if (filename.find("array.hpp") != std::string::npos ||
+    if (filename.find(".h") != std::string::npos ||
+        filename.find(".c") != std::string::npos ||
+        filename.find("array.hpp") != std::string::npos ||
         filename.find("fmt.hpp") != std::string::npos) {
       return;
     }
@@ -85,7 +87,9 @@ void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Re
 
   // Some BSL capabilites require implicit casts to function properly
   if (ICE->getCastKind() == CK_IntegralToBoolean) {
-    if (filename.find("add_lvalue_reference.hpp") != std::string::npos ||
+    if (filename.find(".h") != std::string::npos ||
+        filename.find(".c") != std::string::npos ||
+        filename.find("add_lvalue_reference.hpp") != std::string::npos ||
         filename.find("add_pointer.hpp") != std::string::npos ||
         filename.find("add_rvalue_reference.hpp") != std::string::npos ||
         filename.find("is_nothrow_convertible.hpp") != std::string::npos ||
@@ -96,7 +100,11 @@ void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Re
 
   // Some BSL capabilites require implicit casts to function properly
   if (ICE->getCastKind() == CK_IntegralCast) {
-    if (filename.find("is_nothrow_convertible.hpp") != std::string::npos) {
+    if (filename.find("integer.hpp") != std::string::npos ||
+        filename.find("is_nothrow_convertible.hpp") != std::string::npos ||
+        filename.find("out_line.hpp") != std::string::npos ||
+        filename.find("safe_idx.hpp") != std::string::npos ||
+        filename.find("safe_integral.hpp") != std::string::npos) {
       return;
     }
   }
@@ -108,10 +116,14 @@ void ImplicitConversionsForbiddenCheck::check(const MatchFinder::MatchResult &Re
       if (SE->getType()->isBooleanType())
         return;
 
-      if (SE->getType().getAsString() == "char")
+      auto const name{SE->getType().getAsString()};
+      if (name.find("enum ") != std::string::npos)
         return;
 
-      if (SE->getType().getAsString() == "bsl::char_type")
+      if (name == "char")
+        return;
+
+      if (name == "bsl::char_type")
         return;
     }
   }

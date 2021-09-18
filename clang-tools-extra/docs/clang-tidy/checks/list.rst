@@ -102,7 +102,6 @@ Clang-Tidy Checks
    `bsl-stmt-switch-default-break <bsl-stmt-switch-default-break.html>`_,
    `bsl-stmt-switch-default-last <bsl-stmt-switch-default-last.html>`_,
    `bsl-struct-def <bsl-struct-def.html>`_,
-   `bsl-template-generic-param <bsl-template-generic-param.html>`_,
    `bsl-ternary-operator-forbidden <bsl-ternary-operator-forbidden.html>`_,
    `bsl-types-fixed-width-ints-arithmetic-check <bsl-types-fixed-width-ints-arithmetic-check.html>`_,
    `bsl-types-fixed-width-ints <bsl-types-fixed-width-ints.html>`_,

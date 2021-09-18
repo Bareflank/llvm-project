@@ -79,7 +79,9 @@ void IntegralLiteralsInConstexprCheck::check_integral_literals(const MatchFinder
     return;
 
   auto const filename{File->tryGetRealPathName()};
-  if (filename.find("add_lvalue_reference.hpp") != std::string::npos ||
+  if (filename.find(".h") != std::string::npos ||
+      filename.find(".c") != std::string::npos ||
+      filename.find("add_lvalue_reference.hpp") != std::string::npos ||
       filename.find("add_pointer.hpp") != std::string::npos ||
       filename.find("add_rvalue_reference.hpp") != std::string::npos ||
       filename.find("array.hpp") != std::string::npos ||

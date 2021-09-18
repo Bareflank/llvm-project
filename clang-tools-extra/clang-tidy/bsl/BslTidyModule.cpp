@@ -66,7 +66,6 @@
 #include "StmtSwitchDefaultBreakCheck.h"
 #include "StmtSwitchDefaultLastCheck.h"
 #include "StructDefCheck.h"
-#include "TemplateGenericParamCheck.h"
 #include "TernaryOperatorForbiddenCheck.h"
 #include "TypesFixedWidthIntsArithmeticCheckCheck.h"
 #include "TypesFixedWidthIntsCheck.h"
@@ -193,8 +192,6 @@ public:
         "bsl-stmt-switch-default-last");
     CheckFactories.registerCheck<StructDefCheck>(
         "bsl-struct-def");
-    CheckFactories.registerCheck<TemplateGenericParamCheck>(
-        "bsl-template-generic-param");
     CheckFactories.registerCheck<TernaryOperatorForbiddenCheck>(
         "bsl-ternary-operator-forbidden");
     CheckFactories.registerCheck<TypesFixedWidthIntsCheck>(
