@@ -63,7 +63,7 @@ void VerifyConstCheck::check_var_decl(const MatchFinder::MatchResult &Result) {
   if (VD->isInvalidDecl())
     return;
 
-  if (VD->isFunctionOrMethodVarDecl())
+  if (VD->isConstexpr())
     return;
 
   auto name = VD->getName();
