@@ -93,21 +93,21 @@ void VerifyConstCheck::check_var_decl(const MatchFinder::MatchResult &Result) {
   ///
   /// - Like Rust, all variables must be marked const unless they are
   ///   explicitly marked as mutable. To mark mutability, you must name
-  ///   your variables with the following suffixes:
+  ///   your variables with the following prefixes:
   ///   - <none> or cst_
   ///   - mut_
   ///   - udm_
   ///
-  /// - To label a variable as const, you don't need to add any suffix. Again,
+  /// - To label a variable as const, you don't need to add any prefix. Again,
   ///   by default, all variables must be const, so just mark the variable
   ///   as const using "const" in east const form (on the right side of the
   ///   type) and you are good. If a variable needs to be mutable, add the
-  ///   mut_ suffix. If a variable can be either (only needed for template
-  ///   types), use the "undefined mutability" suffix of udm_.
+  ///   mut_ prefix. If a variable can be either (only needed for template
+  ///   types), use the "undefined mutability" prefix of udm_.
   ///
   /// - For the pointer type, we have to worry about who is mutable. LLVM
   ///   tracks the type (the variable itself) and the "pointee". To handle
-  ///   the pointee, add a second suffix with a "p" in front for pointee.
+  ///   the pointee, add a second prefix with a "p" in front for pointee.
   ///
   /// - For global and static variables, the bsl-name-prefix check makes sure
   ///   that all variables start with g_ and s_. In these cases, we remove the
@@ -305,7 +305,7 @@ void VerifyConstCheck::check_var_decl(const MatchFinder::MatchResult &Result) {
         name.startswith("pmut_udm_") ||
         name.startswith("pudm_cst_") ||
         name.startswith("pudm_mut_")) {
-      diag(Loc, "the variable %0 has a pointer-only suffix which is not allowed for non-pointer types") << VD;
+      diag(Loc, "the variable %0 has a pointer-only prefix which is not allowed for non-pointer types") << VD;
       return;
     }
 
