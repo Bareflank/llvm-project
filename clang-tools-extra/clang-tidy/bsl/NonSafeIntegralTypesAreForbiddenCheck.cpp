@@ -134,6 +134,16 @@ void NonSafeIntegralTypesAreForbiddenCheck::check_field_decl(const MatchFinder::
   if (Record->isStruct())
     return;
 
+  auto const *DC = Record->getParent();
+  while (!isa<TranslationUnitDecl>(Decl::castFromDeclContext(DC))) {
+    if (const auto *Rec = dyn_cast<RecordDecl>(DC)) {
+      if (Rec->isStruct()) {
+        return;
+      }
+    }
+    DC = DC->getParent();
+  }
+
   auto const QT = FD->getType().getNonReferenceType().getCanonicalType().getUnqualifiedType();
   if (!QT->isIntegerType())
     return;
