@@ -84,6 +84,7 @@ Clang-Tidy Checks
    `bsl-name-prefixes <bsl-name-prefixes.html>`_,
    `bsl-namespace-global <bsl-namespace-global.html>`_,
    `bsl-nodiscard <bsl-nodiscard.html>`_,
+   `bsl-no-recursion <bsl-no-recursion.html>`_, "Yes"
    `bsl-non-pod-classdef <bsl-non-pod-classdef.html>`_,
    `bsl-non-pod-static <bsl-non-pod-static.html>`_,
    `bsl-non-safe-integral-types-are-forbidden <bsl-non-safe-integral-types-are-forbidden.html>`_,

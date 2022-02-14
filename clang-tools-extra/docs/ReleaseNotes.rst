@@ -412,6 +412,11 @@ New checks
 
   Warns if [[nodiscard]] or [[maybe_unused]] are missing
 
+- New :doc:`bsl-no-recursion
+  <clang-tidy/checks/bsl-no-recursion>` check.
+
+  Finds recursive functions and diagnoses them unless constexpr.
+
 - New :doc:`bsl-non-pod-classdef
   <clang-tidy/checks/bsl-non-pod-classdef>` check.
 

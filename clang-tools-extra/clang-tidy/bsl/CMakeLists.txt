@@ -42,6 +42,7 @@ add_clang_library(clangTidyBslModule
   NamePrefixesCheck.cpp
   NamespaceGlobalCheck.cpp
   NodiscardCheck.cpp
+  NoRecursionCheck.cpp
   NonPodClassdefCheck.cpp
   NonPodStaticCheck.cpp
   NonSafeIntegralTypesAreForbiddenCheck.cpp
